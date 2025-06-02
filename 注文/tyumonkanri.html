@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>注文管理</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <style>
+    /* 全体の文字と余白の調整 */
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    /* メニューボタンの並び */
+    .menu {
+      margin-bottom: 20px;
+    }
+
+    .menu button {
+      margin-right: 10px;
+    }
+
+    /* テーブルの枠と整列 */
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 5px 10px;
+      text-align: center;
+    }
+
+    /* テーブル全体の幅調整 */
+    table {
+      width: 100%;
+    }
+
+    /* 検索と登録部分 */
+    .top-section {
+      margin-bottom: 20px;
+    }
+
+    .search-box {
+      float: right;
+    }
+  </style>
+</head>
+<body>
+<!-- ナビゲーションバー -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- ナビバー下の操作エリア -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <button id="addBtn" class="btn btn-primary me-2" onclick="location.href='tyumontouroku.html'">新規登録</button>
+      <button id="deleteBtn" class="btn btn-danger">削除</button>
+    </div>
+    <div class="input-group" style="width: 300px;">
+      <input type="text" id="searchInput" class="form-control" placeholder="検索フォーム" />
+      <button id="searchBtn" class="btn btn-outline-success">検索</button>
+    </div>
+  </div>
+
+  <!-- 注文一覧テーブル -->
+  <table id="orderTable" class="table table-bordered table-hover">
+    <thead class="table-light">
+      <tr>
+        <th></th>
+        <th>注文ID</th>
+        <th>注文日</th>
+        <th>顧客名</th>
+        <th>品名</th>
+        <th>数量</th>
+        <th>金額</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="checkbox" /></td>
+        <td>001</td>
+        <td>2025/05/12</td>
+        <td>田中</td>
+        <td>すらすらわかるPHP 第２版</td>
+        <td>1</td>
+        <td>2300</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonhensyuu.html'">編集</button></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonsyousai.html'">詳細</button></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" /></td>
+        <td>002</td>
+        <td>2025/05/16</td>
+        <td>佐藤</td>
+        <td>本</td>
+        <td>2</td>
+        <td>1233</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonhensyuu.html'">編集</button></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonsyousai.html'">詳細</button></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" /></td>
+        <td>003</td>
+        <td>2025/05/16</td>
+        <td>和田</td>
+        <td>雑誌</td>
+        <td>3</td>
+        <td>1234</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonhensyuu.html'">編集</button></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonsyousai.html'">詳細</button></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" /></td>
+        <td>004</td>
+        <td>2025/05/16</td>
+        <td>吉田</td>
+        <td>参考書</td>
+        <td>4</td>
+        <td>1235</td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonhensyuu.html'">編集</button></td>
+        <td><button class="btn btn-sm btn-secondary" onclick="location.href='tyumonsyousai.html'">詳細</button></td>
+      </tr>
+    <!-- 必要に応じて追加行 -->
+
+    </tbody>
+  </table>
+
+  <script>
+    // 削除ボタン機能
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      const table = document.getElementById('orderTable').getElementsByTagName('tbody')[0];
+      const rows = Array.from(table.rows);
+      let deletedCount = 0;
+
+      rows.forEach((row) => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        if (checkbox && checkbox.checked) {
+          table.removeChild(row);
+          deletedCount++;
+        }
+      });
+
+      if (deletedCount === 0) {
+        alert('削除する行を選択してください。');
+      }
+    });
+
+    // 検索機能
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      const filter = document.getElementById('searchInput').value.trim().toLowerCase();
+      const table = document.getElementById('orderTable').getElementsByTagName('tbody')[0];
+      const rows = table.rows;
+
+      for (let i = 0; i < rows.length; i++) {
+        const orderId = rows[i].cells[1].textContent.toLowerCase();
+        const customer = rows[i].cells[3].textContent.toLowerCase();
+
+        if (orderId.includes(filter) || customer.includes(filter)) {
+          rows[i].style.display = '';
+        } else {
+          rows[i].style.display = 'none';
+        }
+      }
+    });
+
+    // Enterキーでも検索できるように
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+      }
+    });
+
+  fetch('navbar.html')
+    .then(response => response.text())
+    .then(data => {
+    document.getElementById('navbar-placeholder').innerHTML = data;
+  });
+
+  </script>
+
+
+  
+</body>
+</html>

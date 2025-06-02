@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>納品編集画面</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+
+</head>
+<body>
+
+  <!-- ナビゲーションバー -->
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">メニュー</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <div class="navbar-nav">
+        <a class="nav-item"><a class="nav-link" href="home.html">ホーム</a></li>
+        <a class="nav-item"><a class="nav-link" href="tyumonkanri.html">注文管理</a></li>
+        <a class="nav-item"><a class="nav-link" href="納品管理画面.html">納品管理</a></li>
+        <a class="nav-item"><a class="nav-link" href="顧客登録画面.html">顧客登録</a></li>
+    </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h4>納品書 編集</h4>
+  <div class="row mb-3">
+    <div class="col-md-4 mb-2">
+      <label class="form-label">顧客名</label>
+      <input type="text" class="form-control">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label class="form-label">日付</label>
+      <input type="date" class="form-control" value="2025-02-02">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label class="form-label">No.</label>
+      <input type="text" class="form-control">
+    </div>
+  </div>
+  <table class="table table-bordered table-sm align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>選択</th>
+        <th>No</th>
+        <th>品名</th>
+        <th>数量</th>
+        <th>単価</th>
+        <th>金額（税抜・税込）</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+      <!-- 合計 -->
+      <tr>
+        <td colspan="3"><b>合計</b></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+        <td><input type="text" class="form-control"></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="row mb-3">
+    <div class="col-md-4 mb-2">
+      <label class="form-label">税率</label>
+      <input type="text" class="form-control"> %
+    </div>
+    <div class="col-md-4 mb-2">
+      <label class="form-label">消費税額等</label>
+      <input type="text" class="form-control">
+    </div>
+    <div class="col-md-4 mb-2">
+      <label class="form-label">税込合計</label>
+      <input type="text" class="form-control">
+    </div>
+  </div>
+  <div class="text-center mb-4">
+    <button type="button" class="btn btn-outline-primary me-3" onclick="location.href='納品管理画面.html'">戻るボタン</button>
+    <button type="button" class="btn btn-outline-success">変更完了ボタン</button>
+  </div>
+</div>
+</body>
+</html>
