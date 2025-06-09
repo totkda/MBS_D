@@ -16,11 +16,33 @@ fetch('navbar.html')
 <div class="container mt-4">
   <div class="d-flex justify-content-between mb-3">
     <button class="btn btn-outline-primary" onclick="location.href='注文登録画面.html'">新規登録</button>
-    <div>
-      <input type="text" class="form-control d-inline-block w-auto" placeholder="検索フォーム">
-      <button class="btn btn-outline-secondary ms-2">検索</button>
-    </div>
   </div>
+  <div class="row">
+    <!-- 検索フォーム -->
+    <div class="col-md-3">
+      <div class="border p-3 rounded">
+        <h6>注文書検索</h6>
+        <div class="mb-3">
+          <label class="form-label">注文日</label>
+          <div class="d-flex align-items-center">
+            <input type="date" class="form-control">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">顧客名</label>
+          <input type="text" class="form-control" placeholder="例: 緑橋書店">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">ステータス</label>
+          <select class="form-select">
+            <option selected>すべて</option>
+            <option>処理中</option>
+            <option>完了</option>
+          </select>
+        </div>
+        <button class="btn btn-success w-100">検索</button>
+      </div>
+    </div>
   <h4>注文書一覧</h4>
   <table class="table table-bordered table-striped table-hover table-sm align-middle">
     <thead class="table-light">
