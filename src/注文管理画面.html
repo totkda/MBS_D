@@ -14,9 +14,6 @@ fetch('navbar.html')
   .then(html => { document.getElementById('navbar').innerHTML = html; });
 </script>
 <div class="container mt-4">
-  <div class="d-flex justify-content-between mb-3">
-    <button class="btn btn-outline-primary" onclick="location.href='注文登録画面.html'">新規登録</button>
-  </div>
     <div class="row">
     <!-- 検索フォーム -->
     <div class="col-md-3">
@@ -44,6 +41,9 @@ fetch('navbar.html')
       </div>
     </div>
   <div class="col-md-9">
+      <div class="d-flex justify-content-between mb-3">
+        <button class="btn btn-outline-primary" onclick="location.href='注文登録画面.html'">新規登録</button>
+      </div>
   <h4>注文書一覧</h4>
   <table class="table table-bordered table-striped table-hover table-sm align-middle">
     <thead class="table-light">
