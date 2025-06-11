@@ -17,21 +17,27 @@ fetch('navbar.html')
 <div class="container my-4">
   <h2 class="mb-4 fw-bold">注文書 編集</h2>
   <div class="row mb-3">
-    <div class="col-md-4 mb-2">
+    <div class="col-md-3 mb-2">
       <label class="form-label">顧客名</label>
       <input type="text" class="form-control">
     </div>
-    <div class="col-md-4 mb-2">
+    <div class="col-md-3 mb-2">
       <label class="form-label">日付</label>
       <input type="date" class="form-control">
     </div>
-    <div class="col-md-4 mb-2">
+    <div class="col-md-2 mb-2">
       <label class="form-label">No.</label>
       <input type="text" class="form-control">
     </div>
+    <div class="col-md-2 mb-2 d-flex align-items-end">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="deliveredCheck">
+        <label class="form-check-label" for="deliveredCheck">納品済チェック</label>
+      </div>
+    </div>
   </div>
   <div class="table-responsive">
-    <table class="table table-bordered table-striped table-hover table-sm align-middle mx-auto" style="min-width:1100px;">
+    <table class="table table-bordered table-striped table-hover table-sm align-middle mx-auto">
       <thead class="table-light">
         <tr>
           <th style="width:60px;">No</th>
@@ -49,7 +55,6 @@ fetch('navbar.html')
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
         </tr>
-        <!-- 2～6行も同様 -->
         <tr>
           <td>2</td>
           <td><input type="text" class="form-control"></td>
@@ -95,7 +100,7 @@ fetch('navbar.html')
     </table>
   </div>
   <div class="text-center mb-4 mt-3">
-    <button type="button" class="btn btn-outline-primary me-3">戻る</button>
+    <button type="button" class="btn btn-outline-primary me-3" onclick="location.href='注文詳細画面.html'">戻る</button>
     <button type="button" class="btn btn-outline-success">変更完了</button>
   </div>
 </div>
