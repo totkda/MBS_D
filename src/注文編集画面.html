@@ -15,24 +15,27 @@ fetch('navbar.html')
 </script>
 
 <div class="container my-4">
-  <h2 class="mb-4 fw-bold">注文書 編集</h2>
-  <div class="row mb-3">
-    <div class="col-md-3 mb-2">
-      <label class="form-label">顧客名</label>
-      <input type="text" class="form-control">
+<div class="text-end mb-4 mt-3">
+  <button type="button" class="btn btn-outline-primary ms-2">pdfダウンロード</button>
+  <button type="button" class="btn btn-outline-primary ms-2"></button>
+  <button type="button" class="btn btn-outline-danger ms-2">削除</button>
+</div>
+
+  <div class="row mb-2">
+    <div class="col-md-4 mb-2">
+      <label class="form-label"></label>
+      <input type="text" class="form-control" value="顧客名">
     </div>
-    <div class="col-md-3 mb-2">
-      <label class="form-label">日付</label>
+    <div class="col-md-4 mb-2">
+      <label class="form-label"></label>
       <input type="date" class="form-control">
     </div>
-    <div class="col-md-2 mb-2">
-      <label class="form-label">No.</label>
-      <input type="text" class="form-control">
+    <div class="col-md-4 mb-2">
+      <label class="form-label"></label>
+      <input type="text" class="form-control" value="自動連番">
     </div>
     <div class="col-md-2 mb-2 d-flex align-items-end">
       <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="deliveredCheck">
-        <label class="form-check-label" for="deliveredCheck">納品済チェック</label>
       </div>
     </div>
   </div>
@@ -44,12 +47,16 @@ fetch('navbar.html')
           <th>品名</th>
           <th>数量</th>
           <th>単価</th>
-          <th>金額（税抜・税込）</th>
+          <th>ステータス</th>
+          <th>摘要</th>
+          <th>備考</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>1</td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
@@ -61,9 +68,13 @@ fetch('navbar.html')
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
         </tr>
         <tr>
           <td>3</td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
@@ -75,9 +86,13 @@ fetch('navbar.html')
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
         </tr>
         <tr>
           <td>5</td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
@@ -89,9 +104,23 @@ fetch('navbar.html')
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
         </tr>
         <tr>
-          <td colspan="2"><b>合計</b></td>
+          <td>7</td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
+          <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
           <td><input type="text" class="form-control"></td>
