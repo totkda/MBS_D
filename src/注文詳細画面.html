@@ -15,22 +15,22 @@ fetch('navbar.html')
 </script>
 <div class="container mt-4">
   <div class="d-flex justify-content-between mb-3">
-    <button class="btn btn-outline-primary" onclick="location.href='注文管理画面.html'">戻る</button>
-    <button class="btn btn-outline-secondary" onclick="location.href='注文編集画面.html'">編集</button>
+
+    <button class="btn btn-outline-danger">削除</button>
   </div>
-  <h4>注文書</h4>
+
   <div class="row mb-2">
     <div class="col-md-4 mb-2">
       <label class="form-label">顧客名</label>
-      <input type="text" class="form-control" value="中川商事" readonly>
+      <input type="text" class="form-control" value="顧客名" readonly>
     </div>
     <div class="col-md-4 mb-2">
       <label class="form-label">日付</label>
-      <input type="date" class="form-control" value="2025-05-10" readonly>
+      <input type="date" class="form-control" value="" readonly>
     </div>
     <div class="col-md-4 mb-2">
       <label class="form-label">No.</label>
-      <input type="text" class="form-control" value="1" readonly>
+      <input type="text" class="form-control" value="自動連番" readonly>
     </div>
   </div>
   <table class="table table-bordered table-striped table-hover table-sm align-middle">
@@ -40,24 +40,23 @@ fetch('navbar.html')
         <th>品名</th>
         <th>数量</th>
         <th>単価</th>
-        <th>金額（税抜・税込）</th>
+        <th>ステータス</th>
+        <th>摘要</th>
+        <th>備考</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>1</td><td>魔法の水</td><td>5</td><td>3,000</td><td>15,000</td>
-      </tr>
-      <tr><td>2</td><td></td><td></td><td></td><td></td></tr>
-      <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
-      <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
-      <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
-      <tr><td>6</td><td></td><td></td><td></td><td></td></tr>
-      <tr>
-        <td colspan="2"><b>合計</b></td>
-        <td>5</td><td>3,000</td><td>15,000</td>
-      </tr>
+      <tr><td>1</td><td>本</td><td>1</td><td>￥1,200</td><td>処理中</td><td></td></tr>
+      <tr><td>2</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>3</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>4</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>5</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>6</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>7</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>8</td><td></td><td></td><td></td><td></td><td></td></tr>
     </tbody>
   </table>
+    <button class="btn btn-outline-primary" onclick="location.href='注文管理画面.html'">戻る</button>
 </div>
 </body>
 </html>
