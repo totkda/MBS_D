@@ -37,7 +37,7 @@
         <div>
             <div class="text-end">
                 <input type="button" class="btn btn-primary" value="pdfダウンロード">
-                <input type="button" class="btn btn-danger" value="削除">
+                <input type="button" id="delivery-delete-button" class="btn btn-danger" value="削除">
             </div>
         </div>
         <form>
@@ -152,11 +152,95 @@
             </div>
         </form>
         <div class="text-center">
-            <a href="./納品管理.html"><input type="button" class="btn btn-danger" value="戻る"></a>
-            <input type="button" class="btn btn-success" value="編集完了">
+            <input type="button" id="delivery-cansel-button" class="btn btn-danger" value="戻る">
+            <input type="button" id="delivery-insert-button" class="btn btn-success" value="編集完了">
         </div>
     </main>
     <script src="./js/delivery_detail.js"></script>
+<div class="modal fade" id="delivery-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">納品書の編集完了をします</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に編集完了しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./納品管理.html"><button type="button" class="btn btn-success"
+                                onclick="hideForm()">編集完了する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="delivery-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">納品書の作成を中断しますか？</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に中断して戻りますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
+                                onclick="hideForm()">戻る</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="delivery-delete" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">削除します</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に削除しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
+                                onclick="hideForm()">削除する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <!-- JS読み込み（jQuery → Bootstrap） -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ポップアップ表示のスクリプト -->
+<script>
+    $(function () {
+        $('#delivery-insert-button').on('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));
+            modal.show();
+        });
+
+        $('#delivery-cansel-button').on('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('delivery-cansel'));
+            modal.show();
+        });
+        $('#delivery-delete-button').on('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('delivery-delete'));
+            modal.show();
+        });
+    });
+</script>
 </body>
 
 </html>

@@ -4,9 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>納品登録</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         nav ul {
             list-style-type: none;
@@ -156,7 +154,7 @@
                     <button type="button" id="openModal" class="btn btn-primary" onclick="showForm()">項目追加</button>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="./納品管理.html"><button type="button" class="btn btn-danger">戻る</button></a>
+                    <button type="button" id="delivery-cansel-button" class="btn btn-danger">戻る</button>
                     <button type="button" id="delivery-insert-button" class="btn btn-success">登録</button>
                 </div>
             </div>
@@ -311,18 +309,7 @@
         </div>
     </main>
 
-    <script>
-        $(function () {
-            $('#openModal').on('click', function () {
-                const modal = new bootstrap.Modal(document.getElementById('delivery-register-form'));
-                modal.show();
-            });
-        });
-    </script>
-
-    <!--  ここからコピペ bodyの一番下につけてください  -->
-    <!--  各画面で書き直すとこをコメントで書いてます 書いてないとこはそのままでOKです  -->
-    <!--  登録二重確認  -->
+    
     <div class="modal fade" id="delivery-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -343,8 +330,46 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="delivery-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">納品書の作成を中断しますか？</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に中断して戻りますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
+                                onclick="hideForm()">戻る</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./js/delivery_register.js"></script>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        $(function () {
+            $('#openModal').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('delivery-register-form'));
+                modal.show();
+            });
+        });
+    </script>
+    <script>
+        $(function () {
+            $('#delivery-cansel-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
+                const modal = new bootstrap.Modal(document.getElementById('delivery-cansel'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
+                modal.show();
+            });
+        });
+
         $(function () {
             $('#delivery-insert-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
                 const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
@@ -352,9 +377,8 @@
             });
         });
     </script>
-    <!--  ここまでコピペ  -->
 
-    <script src="./js/delivery_register.js"></script>
+    
 </body>
 
 </html>
