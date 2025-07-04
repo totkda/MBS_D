@@ -150,11 +150,69 @@
             </div>
         </div>
         <div class="text-center">
-            <a href="./注文管理.html"><input type="button" class="btn btn-danger" value="戻る"></a>
-            <a href="./注文管理.html"><input type="button" class="btn btn-success" value="登録"></a>
+            <input type="button" id="order-cansel-button" class="btn btn-danger" value="戻る">
+            <input type="button" id="order-insert-button" class="btn btn-success" value="登録">
         </div>
     </main>
     <script src="./js/order_register.js"></script>
+
+    <div class="modal fade" id="order-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">注文書を登録します</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に登録しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./注文管理.html"><button type="button" class="btn btn-success"
+                                onclick="hideForm()">登録する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="order-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">注文書の作成を中断しますか？</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に中断して戻りますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./注文管理.html"><button type="button" class="btn btn-danger"
+                                onclick="hideForm()">戻る</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            $('#order-insert-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
+                const modal = new bootstrap.Modal(document.getElementById('order-insert'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
+                modal.show();
+            });
+        });
+
+        $(function () {
+            $('#order-cansel-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
+                const modal = new bootstrap.Modal(document.getElementById('order-cansel'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
+                modal.show();
+            });
+        });
+    </script>
 </body>
 
 </html>
