@@ -6,6 +6,26 @@
     <title>MBSアプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        nav ul {
+            list-style-type: none;
+        }
+
+        nav ul li {
+            display: inline;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="container text-center">
+        <nav>
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+              <meta charset="UTF-8">
+              <title>（ここにページのタイトルを入力）</title>
+            
+              <style>
                 /* ===============
                    ナビゲーションバー
                    =============== */
@@ -47,17 +67,23 @@
                   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                 }
               </style>
-</head>
-
-<body>
-    <header class="container text-center">
-        <nav class="main-nav">
-            <ul>
-                <li><a href="./index.html"><input type="button" value="ホーム"></a></li>
-                <li><a href="./注文管理.html"><input type="button" value="注文管理"></a></li>
-                <li><a href="./納品管理.html"><input type="button" value="納品管理"></a></li>
-                <li><a href="./顧客取込.html"><input type="button" value="顧客登録"></a></li>
-            </ul>
+            
+            </head>
+            <body>
+            
+              <header class="container text-center">
+                <nav class="main-nav">
+                  <ul>
+                    <li><a href="./index.html">ホーム</a></li>
+                    <li><a href="./注文管理.html">注文管理</a></li>
+                    <li><a href="./納品管理.html">納品管理</a></li>
+                    <li><a href="./顧客取込.html">顧客登録</a></li>
+                  </ul>
+                </nav>
+              </header>
+            
+            </body>
+            </html>
         </nav>
     </header>
 
@@ -66,7 +92,6 @@
         <!--  検索フォーム  -->
         <div class="card">
             <div class="card-body">
-                <!-- コメント -->
                 <h5 class="card-title">統計情報検索</h5>
                 <div class="mt-4">
                     <div class="mb-3">
@@ -175,15 +200,54 @@
                 </table>
 
                 <!--  ページング  -->
-                <div class="text-center" id="pagination-area">
-                    <input type="button" value="←">
-                    <span></span>
-                    <input type="button" value="→">
+                <!DOCTYPE html>
+                <html lang="ja">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Bootstrap ページネーション</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        /* 見た目を整えるための簡単なスタイル */
+                        body {
+                            padding: 2rem;
+                        }
+                    </style>
+                </head>
+                <body>
+                
+                <div class="container">
+                    <h3 class="text-center mb-4"></h3>
+                
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">←</span>
+                                </a>
+                            </li>
+                
+                            <li class="page-item"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item active" aria-current="page"><span class="page-link">2</span></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+                            <li class="page-item"><a class="page-link" href="#">10</a></li>
+                
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
+                
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                </body>
+                </html>
             </div>
         </div>
     </main>
-    <script src="./js/index.js"></script>
 </body>
 
 </html>
