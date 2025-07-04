@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注文書</title>
+    <style>
+        /* 薄い水色の定義 */
+        :root {
+            --light-blue: #a4c2f4; /* 罫線やタイトルに使用する水色 */
+            --very-light-blue: #eaf1fb; /* ヘッダーの背景色 */
+            --dark-text: #333; /* 入力されたテキスト用の黒色 */
+        }
+
+        /* ページ全体のスタイル */
+        body {
+            font-family: 'MS Gothic', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* 注文書全体のコンテナ */
+        .order-form-container {
+            width: 800px;
+            background: #fff;
+            padding: 40px;
+            border: 2px solid var(--light-blue); /* 枠線を太めの水色に変更 */
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* ヘッダー部分（タイトル、日付など） */
+        .header {
+            border-bottom: 2px solid var(--light-blue); /* 下線を水色に変更 */
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+            margin: 0;
+            color: var(--light-blue); /* タイトルを水色に変更 */
+        }
+        .date, .order-number, .recipient {
+            color: var(--dark-text); /* 日付や宛名は黒色のまま */
+        }
+        .date {
+            position: absolute;
+            top: 20px;
+            right: 0;
+            font-size: 1.1em;
+        }
+        .order-number {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            font-size: 1.1em;
+        }
+        .recipient {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 20px;
+            border-bottom: 1px solid var(--dark-text);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .greeting {
+            margin-top: 30px;
+            text-align: left;
+            color: var(--light-blue); /* 挨拶文を水色に変更 */
+        }
+
+        /* 品目テーブルのスタイル */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid var(--light-blue); /* 罫線を水色に変更 */
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+            height: 2.5em; /* セルの高さを指定 */
+        }
+        .items-table thead th {
+            background-color: var(--very-light-blue); /* ヘッダーの背景を非常に薄い水色に変更 */
+            text-align: center;
+            font-weight: bold;
+            color: var(--light-blue); /* ヘッダーの文字を水色に変更 */
+        }
+        /* テーブル内の入力内容は黒色にする */
+        .items-table tbody td {
+            color: var(--dark-text);
+        }
+
+        /* 各列の幅を調整 */
+        .col-num { width: 5%; text-align: center; }
+        .col-name { width: 40%; }
+        .col-quantity { width: 10%; text-align: center; }
+        .col-price { width: 15%; text-align: right; }
+        .col-summary { width: 30%; }
+        
+        /* 備考欄のスタイル */
+        .remarks {
+            margin-top: 10px;
+            border: 1px solid var(--light-blue); /* 枠線を水色に変更 */
+        }
+        .remarks-title {
+            padding: 5px 10px;
+            font-weight: bold;
+            color: var(--light-blue); /* 「備考」の文字を水色に変更 */
+        }
+        .remarks-content {
+            padding: 10px;
+            height: 80px;
+            color: var(--dark-text); /* 備考内容は黒色のまま */
+        }
+
+        /* フッターのキャプション */
+        .caption {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="order-form-container">
+        <div class="header">
+            <h1 class="title">注 文 書</h1>
+            <p class="date">2022年10月16日</p>
+            <p class="order-number">No.</p>
+            <p class="recipient">大阪情報専門学校 様</p>
+            <p class="greeting">下記の通り注文申し上げます</p>
+        </div>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="col-num">&nbsp;</th>
+                    <th class="col-name">品 名</th>
+                    <th class="col-quantity">数 量</th>
+                    <th class="col-price">単 価</th>
+                    <th class="col-summary">摘 要</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-num">1</td>
+                    <td class="col-name">週刊 BCN 10/17</td>
+                    <td class="col-quantity">1</td>
+                    <td class="col-price">¥363-</td>
+                    <td class="col-summary"></td>
+                </tr>
+                <tr>
+                    <td class="col-num">2</td>
+                    <td class="col-name">日経コンピュータ 11月号</td>
+                    <td class="col-quantity">1</td>
+                    <td class="col-price">¥1,300-</td>
+                    <td class="col-summary"></td>
+                </tr>
+                <tr>
+                    <td class="col-num">3</td>
+                    <td class="col-name">日経ネットワーク 11月号</td>
+                    <td class="col-quantity">1</td>
+                    <td class="col-price">¥1,300-</td>
+                    <td class="col-summary"></td>
+                </tr>
+                <tr>
+                    <td class="col-num">4</td>
+                    <td class="col-name">Software Design 11月号</td>
+                    <td class="col-quantity">1</td>
+                    <td class="col-price">¥1,342-</td>
+                    <td class="col-summary"></td>
+                </tr>
+                <tr>
+                    <td class="col-num">5</td>
+                    <td class="col-name">医療情報技師 能力検定過去問題集</td>
+                    <td class="col-quantity">1</td>
+                    <td class="col-price">¥2,740-</td>
+                    <td class="col-summary">978-4867058138</td>
+                </tr>
+                <tr><td>6</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>7</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>8</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>9</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>10</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>11</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>12</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>13</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>14</td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>15</td><td></td><td></td><td></td><td></td></tr>
+            </tbody>
+        </table>
+
+        <div class="remarks">
+            <div class="remarks-title">備考</div>
+            <div class="remarks-content">
+                ＃５ 定期外購入
+            </div>
+        </div>
+    </div>
+
+    <p class="caption">図1 注文書（サンプル）</p>
+
+</body>
+</html>

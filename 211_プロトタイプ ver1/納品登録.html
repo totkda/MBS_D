@@ -7,7 +7,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <style>
+    <style>
+        nav ul {
+            list-style-type: none;
+        }
+
+        nav ul li {
+            display: inline;
+        }
+
+        td input,
+        textarea {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ナビゲーションバー -->
+    <header class="container text-center">
+        <nav>
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+              <meta charset="UTF-8">
+              <title>（ここにページのタイトルを入力）</title>
+            
+              <style>
                 /* ===============
                    ナビゲーションバー
                    =============== */
@@ -49,19 +76,23 @@
                   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                 }
               </style>
-</head>
-
-<body>
-
-    <!-- ナビゲーションバー -->
-    <header class="container text-center">
-        <nav>
-            <ul>
-                <li><a href="./index.html"><input type="button" value="ホーム"></a></li>
-                <li><a href="./注文管理.html"><input type="button" value="注文管理"></a></li>
-                <li><a href="./納品管理.html"><input type="button" value="納品管理"></a></li>
-                <li><a href="./顧客取込.html"><input type="button" value="顧客登録"></a></li>
-            </ul>
+            
+            </head>
+            <body>
+            
+              <header class="container text-center">
+                <nav class="main-nav">
+                  <ul>
+                    <li><a href="./index.html">ホーム</a></li>
+                    <li><a href="./注文管理.html">注文管理</a></li>
+                    <li><a href="./納品管理.html">納品管理</a></li>
+                    <li><a href="./顧客取込.html">顧客登録</a></li>
+                  </ul>
+                </nav>
+              </header>
+            
+            </body>
+            </html>
         </nav>
     </header>
 
@@ -91,11 +122,11 @@
             <div>
                 <table class="table table-bordered  border-dark  table-striped table-hover table-sm align-middle mb-0"">
                     <colgroup>
-                        <col style=" width: 2%;">
-                    <col style="width: 42%;">
-                    <col style="width: 11%;">
-                    <col style="width: 11%;">
-                    <col style="width: 33%;">
+                        <col style="width: 2%;">
+                        <col style="width: 42%;">
+                        <col style="width: 11%;">
+                        <col style="width: 11%;">
+                        <col style="width: 33%;">
                     </colgroup>
                     <thead class="table-dark table-bordered  border-light sticky-top">
                         <tr>
@@ -199,7 +230,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body d-flex">
-
+                        
                         <!--  検索フォーム  -->
                         <div class="card">
                             <div class="card-body">
@@ -209,14 +240,12 @@
                                 <div class="mt-4">
                                     <div class="mb-3">
                                         <div>注文日</div>
-                                        <input type="date" id="order-date-since" class="form-control"
-                                            style="display: inline;">
+                                        <input type="date" id="order-date-since" class="form-control" style="width: 80%; display: inline;">
                                         <label for="order-date-since" class="form-label">から</label><br>
-                                        <input type="date" id="order-date-until" class="form-control"
-                                            style="display: inline;">
+                                        <input type="date" id="order-date-until" class="form-control" style="width: 80%; display: inline;">
                                         <label for="order-date-until" class="form-label">まで</label><br>
                                     </div>
-
+                                    
                                     <input type="hidden" name="page" value="1">
                                     <input type="button" value="検索" class="btn btn-primary w-100"></button>
                                 </div>
@@ -242,8 +271,7 @@
                                 </div>
                             </div>
                             <div style="height: 180px; overflow-y: auto;">
-                                <table
-                                    class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
+                                <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
                                     <colgroup>
                                         <col style="width: 2%;">
                                         <col style="width: 30%;">
@@ -266,11 +294,11 @@
                                     <tbody>
                                         <tr>
                                             <td>1</td>
-                                            <td><input type="text" value="週刊BCN 10/17" readonly></td>
+                                            <td>週刊BCN 10/17</td>
                                             <td><input type="text" value="0"></td>
                                             <td>/</td>
-                                            <td><input type="text" value="1" readonly></td>
-                                            <td>&yen;<input type="text" style="width: 80%;" value="363" readonly></td>
+                                            <td>1</td>
+                                            <td>363</td>
                                             <td><input type="text" readonly></td>
                                             <td rowspan="15"><textarea rows="5" readonly></textarea></td>
                                         </tr>
@@ -348,24 +376,22 @@
         });
     </script>
 
-    <!--  ここからコピペ bodyの一番下につけてください  -->
-    <!--  各画面で書き直すとこをコメントで書いてます 書いてないとこはそのままでOKです  -->
-    <!--  登録二重確認  -->
-    <div class="modal fade" id="delivery-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+    <!-- 登録二重確認 -->
+    <div class="modal fade" id="delivery-insert" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">納品書を登録します</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">納品書を登録します</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に登録しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に登録しますか？</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                     <div class="text-end">
                         <a href="./納品管理.html"><button type="button" class="btn btn-success"
-                                onclick="hideForm()">登録する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                                onclick="hideForm()">登録する</button></a>
                     </div>
                 </div>
             </div>
@@ -374,15 +400,12 @@
 
     <script>
         $(function () {
-            $('#delivery-insert-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
-                const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
+            $('#delivery-insert-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));
                 modal.show();
             });
         });
     </script>
-    <!--  ここまでコピペ  -->
-
-    <script src="./js/delivery_register.js"></script>
 </body>
 
 </html>
