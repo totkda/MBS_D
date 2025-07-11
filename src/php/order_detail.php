@@ -17,87 +17,87 @@ $options = [
 
 // 注文ID取得（GETパラメータ）
 
-$order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$order = null;
-$order_items = [];
-$errors = [];
-$success = false;
+// $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// $order = null;
+// $order_items = [];
+// $errors = [];
+// $success = false;
 
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+// try {
+//     $pdo = new PDO($dsn, $user, $pass, $options);
 
-    // POST時：編集保存処理
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // バリデーション
-        $customer_name = trim($_POST['customer_name'] ?? '');
-        $order_date = trim($_POST['order_date'] ?? '');
-        $order_no = trim($_POST['order_no'] ?? '');
-        $remarks = trim($_POST['remarks'] ?? '');
-        $items = $_POST['items'] ?? [];
+//     // POST時：編集保存処理
+//     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+//         // バリデーション
+//         $customer_name = trim($_POST['customer_name'] ?? '');
+//         $order_date = trim($_POST['order_date'] ?? '');
+//         $order_no = trim($_POST['order_no'] ?? '');
+//         $remarks = trim($_POST['remarks'] ?? '');
+//         $items = $_POST['items'] ?? [];
 
-        if ($customer_name === '') {
-            $errors[] = '顧客名は必須です。';
-        }
-        if ($order_date === '') {
-            $errors[] = '注文日を入力してください。';
-        }
-        if (!preg_match('/^\\d+$/', $order_no)) {
-            $errors[] = '注文No.は数字で入力してください。';
-        }
-        // 商品明細バリデーション
-        foreach ($items as $idx => $item) {
-            if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') {
-                continue; // 空行はスキップ
-            }
-            if (trim($item['product_name']) === '') {
-                $errors[] = ($idx + 1) . '行目の品名は必須です。';
-            }
-            if (!preg_match('/^\\d+$/', $item['quantity'])) {
-                $errors[] = ($idx + 1) . '行目の数量は数字で入力してください。';
-            }
-            if (!preg_match('/^\\d+(\\.\\d+)?$/', $item['unit_price'])) {
-                $errors[] = ($idx + 1) . '行目の単価は数値で入力してください。';
-            }
-        }
+//         if ($customer_name === '') {
+//             $errors[] = '顧客名は必須です。';
+//         }
+//         if ($order_date === '') {
+//             $errors[] = '注文日を入力してください。';
+//         }
+//         if (!preg_match('/^\\d+$/', $order_no)) {
+//             $errors[] = '注文No.は数字で入力してください。';
+//         }
+//         // 商品明細バリデーション
+//         foreach ($items as $idx => $item) {
+//             if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') {
+//                 continue; // 空行はスキップ
+//             }
+//             if (trim($item['product_name']) === '') {
+//                 $errors[] = ($idx + 1) . '行目の品名は必須です。';
+//             }
+//             if (!preg_match('/^\\d+$/', $item['quantity'])) {
+//                 $errors[] = ($idx + 1) . '行目の数量は数字で入力してください。';
+//             }
+//             if (!preg_match('/^\\d+(\\.\\d+)?$/', $item['unit_price'])) {
+//                 $errors[] = ($idx + 1) . '行目の単価は数値で入力してください。';
+//             }
+//         }
 
-        if (!$errors) {
-            // トランザクションで更新
-            $pdo->beginTransaction();
-            // 注文テーブル更新
-            $stmt = $pdo->prepare('UPDATE orders SET customer_name=?, order_date=?, order_no=?, remarks=? WHERE id=?');
-            $stmt->execute([$customer_name, $order_date, $order_no, $remarks, $order_id]);
-            // 明細は一旦全削除→再登録（簡易実装）
-            $pdo->prepare('DELETE FROM order_items WHERE order_id=?')->execute([$order_id]);
-            $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_name, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)');
-            foreach ($items as $item) {
-                if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') continue;
-                $stmt->execute([
-                    $order_id,
-                    trim($item['product_name']),
-                    intval($item['quantity']),
-                    floatval($item['unit_price']),
-                    trim($item['note'])
-                ]);
-            }
-            $pdo->commit();
-            $success = true;
-        }
-    }
+//         if (!$errors) {
+//             // トランザクションで更新
+//             $pdo->beginTransaction();
+//             // 注文テーブル更新
+//             $stmt = $pdo->prepare('UPDATE orders SET customer_name=?, order_date=?, order_no=?, remarks=? WHERE id=?');
+//             $stmt->execute([$customer_name, $order_date, $order_no, $remarks, $order_id]);
+//             // 明細は一旦全削除→再登録（簡易実装）
+//             $pdo->prepare('DELETE FROM order_items WHERE order_id=?')->execute([$order_id]);
+//             $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_name, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)');
+//             foreach ($items as $item) {
+//                 if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') continue;
+//                 $stmt->execute([
+//                     $order_id,
+//                     trim($item['product_name']),
+//                     intval($item['quantity']),
+//                     floatval($item['unit_price']),
+//                     trim($item['note'])
+//                 ]);
+//             }
+//             $pdo->commit();
+//             $success = true;
+//         }
+//     }
 
-    // 最新データ取得
-    $stmt = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
-    $stmt->execute([$order_id]);
-    $order = $stmt->fetch();
-    $stmt = $pdo->prepare('SELECT * FROM order_items WHERE order_id = ?');
-    $stmt->execute([$order_id]);
-    $order_items = $stmt->fetchAll();
-} catch (PDOException $e) {
-    die('DB接続エラー: ' . $e->getMessage());
-}
+//     // 最新データ取得
+//     $stmt = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
+//     $stmt->execute([$order_id]);
+//     $order = $stmt->fetch();
+//     $stmt = $pdo->prepare('SELECT * FROM order_items WHERE order_id = ?');
+//     $stmt->execute([$order_id]);
+//     $order_items = $stmt->fetchAll();
+// } catch (PDOException $e) {
+//     die('DB接続エラー: ' . $e->getMessage());
+// }
 
-if (!$order) {
-    die('注文が見つかりません。');
-}
+// if (!$order) {
+//     die('注文が見つかりません。');
+// }
 ?>
 <!DOCTYPE html>
 <html lang="ja">
