@@ -90,14 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
 <body>
     <!-- ナビゲーションバー -->
     <header class="container text-center">
-        <nav class="main-nav">
-            <ul>
-                <li><a href="./index.php">ホーム</a></li>
-                <li><a href="./注文管理.php">注文管理</a></li>
-                <li><a href="./納品管理.php">納品管理</a></li>
-                <li><a href="./customer_registor.php">顧客登録</a></li>
-            </ul>
-        </nav>
+        <?php include 'navbar.php'; ?>
     </header>
     <main class="container mt-5">
         <!-- メッセージ表示 -->

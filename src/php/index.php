@@ -62,6 +62,11 @@ $order = $_GET['order'] ?? 'desc';
     <!-- ナビゲーションバー -->
     <header class="container text-center">
         <?php include 'navbar.php'; ?>
+        <!-- ショートカットキーをナビバー下に配置 -->
+        <div class="text-center my-2">
+            <a href="./注文登録.php"><input type="button" class="btn btn-success" value="注文登録"></a>
+            <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
+        </div>
     </header>
     <main class="container d-flex">
         <!-- 検索フォーム -->
@@ -99,11 +104,6 @@ $order = $_GET['order'] ?? 'desc';
             </div>
         </div>
         <div>
-            <!-- ショートカットキー -->
-            <div class="text-center">
-                <a href="./注文登録.php"><input type="button" class="btn btn-success" value="注文登録"></a>
-                <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
-            </div>
             <!-- 統計表 -->
             <div>
                 <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">

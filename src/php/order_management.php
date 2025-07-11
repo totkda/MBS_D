@@ -79,14 +79,7 @@ try {
 
 <body>
     <header class="container text-center">
-        <nav class="main-nav">
-            <ul>
-                <li><a href="./index.php">ホーム</a></li>
-                <li><a href="./order_management.php">注文管理</a></li>
-                <li><a href="./delivery_management.php">納品管理</a></li>
-                <li><a href="./customer_registor.php">顧客登録</a></li>
-            </ul>
-        </nav>
+        <?php include 'navbar.php'; ?>
     </header>
     <main class="container mt-5 d-flex">
         <!-- 検索フォーム -->
