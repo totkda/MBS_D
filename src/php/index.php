@@ -25,21 +25,29 @@ $branch_name = $_GET['branch_name'] ?? '';
 $sort = $_GET['sort'] ?? 'total_sales';
 $order = $_GET['order'] ?? 'desc';
 
-// データ取得SQL（例: 顧客統計情報）
-$sql = "SELECT b.branch_name, c.customer_id, c.customer_name, c.total_sales, c.avg_lead_time
-        FROM customers c
-        LEFT JOIN branches b ON c.branch_id = b.branch_id
-        WHERE (:customer_name = '' OR c.customer_name LIKE :customer_name_like)
-        AND (:branch_name = '' OR b.branch_name LIKE :branch_name_like)
-        ORDER BY $sort $order
-        LIMIT 20";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(':customer_name', $customer_name);
-$stmt->bindValue(':customer_name_like', "%$customer_name%", PDO::PARAM_STR);
-$stmt->bindValue(':branch_name', $branch_name);
-$stmt->bindValue(':branch_name_like', "%$branch_name%", PDO::PARAM_STR);
-$stmt->execute();
-$rows = $stmt->fetchAll();
+// // データ取得SQL（例: 顧客統計情報）データが空だとエラーになるため、初期化
+// $sql = "SELECT 
+//             b.branch_name, 
+//             c.customer_id, 
+//             c.customer_name, 
+//             COALESCE(SUM(o.amount), 0) AS total_sales, 
+//             COALESCE(AVG(DATEDIFF(o.delivery_date, o.order_date)), 0) AS avg_lead_time
+//         FROM customers c
+//         LEFT JOIN branches b ON c.branch_id = b.branch_id
+//         LEFT JOIN orders o ON c.customer_id = o.customer_id
+//         WHERE (:customer_name = '' OR c.customer_name LIKE :customer_name_like)
+//         AND (:branch_name = '' OR b.branch_name LIKE :branch_name_like)
+//         GROUP BY b.branch_name, c.customer_id, c.customer_name
+//         ORDER BY $sort $order
+//         LIMIT 20";
+// $stmt = $pdo->prepare($sql);
+// // バインド値を条件に応じてセット
+// $stmt->bindValue(':customer_name', $customer_name);
+// $stmt->bindValue(':customer_name_like', $customer_name === '' ? '%' : "%$customer_name%", PDO::PARAM_STR);
+// $stmt->bindValue(':branch_name', $branch_name);
+// $stmt->bindValue(':branch_name_like', $branch_name === '' ? '%' : "%$branch_name%", PDO::PARAM_STR);
+// $stmt->execute();
+// $rows = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
@@ -48,22 +56,17 @@ $rows = $stmt->fetchAll();
     <meta charset="UTF-8">
     <title>MBSアプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* ...既存のCSS... */
-    </style>
 </head>
 
 <body>
     <!-- ナビゲーションバー -->
     <header class="container text-center">
-        <nav class="main-nav">
-            <ul>
-                <li><a href="./index.php">ホーム</a></li>
-                <li><a href="./注文管理.php">注文管理</a></li>
-                <li><a href="./納品管理.php">納品管理</a></li>
-                <li><a href="./顧客取込.php">顧客登録</a></li>
-            </ul>
-        </nav>
+        <?php include 'navbar.php'; ?>
+        <!-- ショートカットキーをナビバー下に配置 -->
+        <div class="text-center my-2">
+            <a href="./注文登録.php"><input type="button" class="btn btn-success" value="注文登録"></a>
+            <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
+        </div>
     </header>
     <main class="container d-flex">
         <!-- 検索フォーム -->
@@ -101,11 +104,6 @@ $rows = $stmt->fetchAll();
             </div>
         </div>
         <div>
-            <!-- ショートカットキー -->
-            <div class="text-center">
-                <a href="./注文登録.php"><input type="button" class="btn btn-success" value="注文登録"></a>
-                <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
-            </div>
             <!-- 統計表 -->
             <div>
                 <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
