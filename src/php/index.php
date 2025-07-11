@@ -25,21 +25,29 @@ $branch_name = $_GET['branch_name'] ?? '';
 $sort = $_GET['sort'] ?? 'total_sales';
 $order = $_GET['order'] ?? 'desc';
 
-// データ取得SQL（例: 顧客統計情報）
-$sql = "SELECT b.branch_name, c.customer_id, c.customer_name, c.total_sales, c.avg_lead_time
-        FROM customers c
-        LEFT JOIN branches b ON c.branch_id = b.branch_id
-        WHERE (:customer_name = '' OR c.customer_name LIKE :customer_name_like)
-        AND (:branch_name = '' OR b.branch_name LIKE :branch_name_like)
-        ORDER BY $sort $order
-        LIMIT 20";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(':customer_name', $customer_name);
-$stmt->bindValue(':customer_name_like', "%$customer_name%", PDO::PARAM_STR);
-$stmt->bindValue(':branch_name', $branch_name);
-$stmt->bindValue(':branch_name_like', "%$branch_name%", PDO::PARAM_STR);
-$stmt->execute();
-$rows = $stmt->fetchAll();
+// // データ取得SQL（例: 顧客統計情報）データが空だとエラーになるため、初期化
+// $sql = "SELECT 
+//             b.branch_name, 
+//             c.customer_id, 
+//             c.customer_name, 
+//             COALESCE(SUM(o.amount), 0) AS total_sales, 
+//             COALESCE(AVG(DATEDIFF(o.delivery_date, o.order_date)), 0) AS avg_lead_time
+//         FROM customers c
+//         LEFT JOIN branches b ON c.branch_id = b.branch_id
+//         LEFT JOIN orders o ON c.customer_id = o.customer_id
+//         WHERE (:customer_name = '' OR c.customer_name LIKE :customer_name_like)
+//         AND (:branch_name = '' OR b.branch_name LIKE :branch_name_like)
+//         GROUP BY b.branch_name, c.customer_id, c.customer_name
+//         ORDER BY $sort $order
+//         LIMIT 20";
+// $stmt = $pdo->prepare($sql);
+// // バインド値を条件に応じてセット
+// $stmt->bindValue(':customer_name', $customer_name);
+// $stmt->bindValue(':customer_name_like', $customer_name === '' ? '%' : "%$customer_name%", PDO::PARAM_STR);
+// $stmt->bindValue(':branch_name', $branch_name);
+// $stmt->bindValue(':branch_name_like', $branch_name === '' ? '%' : "%$branch_name%", PDO::PARAM_STR);
+// $stmt->execute();
+// $rows = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
