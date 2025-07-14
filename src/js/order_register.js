@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     removeBtn?.addEventListener('click', function () {
-        if (tbody && tbody.rows.length > 1) {
+        if (tbody && tbody.rows.length > 5) { // 最低5行は残す
             tbody.deleteRow(tbody.rows.length - 1);
         }
     });
