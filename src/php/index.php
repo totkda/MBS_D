@@ -64,7 +64,7 @@ $order = $_GET['order'] ?? 'desc';
         <?php include 'navbar.php'; ?>
         <!-- ショートカットキーをナビバー下に配置 -->
         <div class="text-center my-2">
-            <a href="./注文登録.php"><input type="button" class="btn btn-success" value="注文登録"></a>
+            <a href="/src/php/order_register.php"><input type="button" class="btn btn-success" value="注文登録"></a>
             <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
         </div>
     </header>
