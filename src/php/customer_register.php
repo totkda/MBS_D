@@ -5,61 +5,62 @@
 // DB接続共通化
 require_once __DIR__ . '/../db_connect.php';
 
-// ファイルアップロード＆DB登録処理
 $message = '';
+$imported = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
     $file = $_FILES['customer_file'];
     if ($file['error'] === UPLOAD_ERR_OK) {
         $tmpName = $file['tmp_name'];
-        // CSVファイルとして読み込み
-        if (($handle = fopen($tmpName, 'r')) !== false) {
-            try {
-                // $pdoはdb_connect.phpで生成済み
-                $pdo->beginTransaction();
-                $rowCount = 0;
-                $successCount = 0;
-                $errorRows = [];
-                while (($data = fgetcsv($handle))) {
-                    // 1行目はヘッダーと仮定
-                    if ($rowCount === 0) {
+        $fileType = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if ($fileType === 'csv') {
+            if (($handle = fopen($tmpName, 'r')) !== false) {
+                try {
+                    $pdo->beginTransaction();
+                    $rowCount = 0;
+                    $successCount = 0;
+                    $errorRows = [];
+                    while (($data = fgetcsv($handle))) {
+                        if ($rowCount === 0) {
+                            $rowCount++;
+                            continue;
+                        }
+                        $branchCheckStmt = $pdo->prepare("SELECT COUNT(*) FROM branches WHERE branch_id = ?");
+                        $branchCheckStmt->execute([$data[1] ?? null]);
+                        if ($branchCheckStmt->fetchColumn() == 0) {
+                            $errorRows[] = $rowCount + 1;
+                            $rowCount++;
+                            continue;
+                        }
+                        $sql = "INSERT INTO customers (customer_name, branch_id, phone_number, postal_code, address, registration_date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->execute([
+                            $data[0] ?? null,
+                            $data[1] ?? null,
+                            $data[2] ?? null,
+                            $data[3] ?? null,
+                            $data[4] ?? null,
+                            $data[5] ?? null,
+                            $data[6] ?? null
+                        ]);
+                        $successCount++;
                         $rowCount++;
-                        continue;
                     }
-                    // 支店IDがbranchesテーブルに存在するかチェック
-                    $branchCheckStmt = $pdo->prepare("SELECT COUNT(*) FROM branches WHERE branch_id = ?");
-                    $branchCheckStmt->execute([$data[1] ?? null]);
-                    if ($branchCheckStmt->fetchColumn() == 0) {
-                        $errorRows[] = $rowCount + 1; // CSVの行番号（1始まり）
-                        $rowCount++;
-                        continue;
+                    $pdo->commit();
+                    $message = "{$successCount}件の顧客情報を登録しました。";
+                    if (!empty($errorRows)) {
+                        $message .= "（支店ID不正によりスキップ: 行 " . implode(', ', $errorRows) . "）";
                     }
-                    // CSV列: 顧客名, 支店ID, 電話番号, 郵便番号, 住所, 登録日, 備考
-                    $sql = "INSERT INTO customers (customer_name, branch_id, phone_number, postal_code, address, registration_date, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([
-                        $data[0] ?? null, // 顧客名
-                        $data[1] ?? null, // 支店ID
-                        $data[2] ?? null, // 電話番号
-                        $data[3] ?? null, // 郵便番号
-                        $data[4] ?? null, // 住所
-                        $data[5] ?? null, // 登録日
-                        $data[6] ?? null  // 備考
-                    ]);
-                    $successCount++;
-                    $rowCount++;
+                    $imported = true;
+                } catch (Exception $e) {
+                    if (isset($pdo)) $pdo->rollBack();
+                    $message = '登録エラー: ' . $e->getMessage();
                 }
-                $pdo->commit();
-                $message = "{$successCount}件の顧客情報を登録しました。";
-                if (!empty($errorRows)) {
-                    $message .= "（支店ID不正によりスキップ: 行 " . implode(', ', $errorRows) . "）";
-                }
-            } catch (Exception $e) {
-                if (isset($pdo)) $pdo->rollBack();
-                $message = '登録エラー: ' . $e->getMessage();
+                fclose($handle);
+            } else {
+                $message = 'ファイルの読み込みに失敗しました。';
             }
-            fclose($handle);
         } else {
-            $message = 'ファイルの読み込みに失敗しました。';
+            $message = 'CSVファイル（.csv）のみ対応しています。EXCELファイル（.xlsx）は対応していません。';
         }
     } else {
         $message = 'ファイルアップロードに失敗しました。';
@@ -89,30 +90,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
             <div class="alert alert-info"> <?= htmlspecialchars($message) ?> </div>
         <?php endif; ?>
         <!-- ファイルアップロードフォーム -->
-        <form method="post" enctype="multipart/form-data">
-            <div>顧客表のファイルを選択してください（CSV形式）</div>
+        <form method="post" enctype="multipart/form-data" id="import-form">
+            <div>顧客表のファイルを選択してください（CSV形式 .csv のみ対応）</div>
             <input type="file" name="customer_file" class="mt-2" accept=".csv" required>
             <div class="text-center mt-3">
-                <input type="submit" id="client-insert-button" class="btn btn-success" value="取り込む">
+                <button type="submit" id="client-insert-button" class="btn btn-success">取り込む</button>
             </div>
         </form>
     </main>
-    <!-- モーダル（ダミー） -->
-    <div class="modal fade" id="client-insert" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <!-- 完了モーダル -->
+    <div class="modal fade" id="import-complete" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">顧客情報を取り込みます</h5>
+                    <h5 class="modal-title">取り込み完了</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に顧客情報を取り込みますか？</div>
+                    <div>顧客情報の取り込みが完了しました。</div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                    <div class="text-end">
-                        <a href="./customer_registor.php"><button type="button" class="btn btn-success">取り込みします</button></a>
-                    </div>
+                    <button type="button" id="import-complete-close" class="btn btn-primary" data-bs-dismiss="modal">閉じる</button>
                 </div>
             </div>
         </div>
@@ -120,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
     <!-- JS読み込み（jQuery → Bootstrap） -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- <script src="./js/customer_import.js"></script> -->
+    <script src="/src/js/customer_register.js"></script>
 </body>
 
 </html>
