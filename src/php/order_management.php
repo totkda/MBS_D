@@ -2,19 +2,8 @@
 // order_management.php
 // 注文管理画面：注文の検索・一覧表示・削除
 
-
-// DB接続設定
-$host = '127.0.0.1';
-$db = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+// DB接続共通化
+require_once __DIR__ . '/../db_connect.php';
 
 // 検索条件取得
 $order_date_since = $_GET['order_date_since'] ?? '';
@@ -25,7 +14,7 @@ $branch_name = $_GET['branch_name'] ?? '';
 $message = '';
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    // $pdoはdb_connect.phpで生成済み
     // 削除処理
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_id'])) {
         $delete_order_id = $_POST['delete_order_id'];
