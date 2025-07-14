@@ -1,20 +1,12 @@
 <?php
-// データベース接続情報
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'mbs');
-define('DB_USER', 'root'); // XAMPPのデフォルトユーザー名
-define('DB_PASS', '');     // XAMPPのデフォルトパスワード
+// db_connect.php を利用
+require_once(__DIR__ . '/db_connect.php'); // ← ここでdb_connect.phpを読み込む
 
 $message = '';
-$pdo = null;
 
 // 登録ボタンが押されたときの処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     try {
-        $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USER, DB_PASS);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-
         // --- デバッグ用: テーブルとカラムの存在確認 ---
         // customersテーブルのIDカラム存在確認
         try {
@@ -114,8 +106,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 if ($fetched_product) {
                     $product_id = $fetched_product['product_id'];
                 } else {
-                    $message .= '<div class="alert alert-warning" role="alert">警告: 品名 "' . htmlspecialchars($current_product_name) . '" が商品マスタに見つかりません。この商品は登録されません。</div>';
-                    continue;
+                    // 商品マスタに存在しない場合、新規登録
+                    // 新しいproduct_idを採番
+                    $sql_max_product = "SELECT MAX(product_id) AS max_id FROM products";
+                    $stmt_max_product = $pdo->query($sql_max_product);
+                    $row_max_product = $stmt_max_product->fetch(PDO::FETCH_ASSOC);
+                    $product_id = ($row_max_product && $row_max_product['max_id'] !== null) ? $row_max_product['max_id'] + 1 : 1;
+
+                    // 新規商品登録
+                    $sql_insert_product = "INSERT INTO products (product_id, short_name, product_name) VALUES (?, ?, ?)";
+                    $stmt_insert_product = $pdo->prepare($sql_insert_product);
+                    $stmt_insert_product->execute([
+                        (int)$product_id,
+                        '', // short_nameは空で登録
+                        $current_product_name
+                    ]);
+                    $message .= '<div class="alert alert-info" role="alert">品名 "' . htmlspecialchars($current_product_name) . '" を商品マスタに新規登録しました。</div>';
                 }
 
                 // product_idの重複チェック
@@ -149,7 +155,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 
@@ -157,6 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <meta charset="UTF-8">
     <title>MBSアプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 外部JSファイルを読み込む -->
+    <script src="注文登録.js"></script>
     <style>
         /* ===============
             ナビゲーションバー
@@ -205,11 +212,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     <header class="container text-center">
         <nav class="main-nav">
             <ul>
-                <!-- ナビゲーションボタンの修正: input type="button" を削除し、aタグ内にテキストを直接記述 -->
-                <li><a href="./index.html">ホーム</a></li>
-                <li><a href="./注文管理.html">注文管理</a></li>
-                <li><a href="./納品管理.html">納品管理</a></li>
-                <li><a href="./顧客取込.html">顧客登録</a></li>
+                <!-- ナビゲーションボタンのリンク先を.html→.phpに修正 -->
+                <li><a href="./index.php">ホーム</a></li>
+                <li><a href="./注文管理.php">注文管理</a></li>
+                <li><a href="./納品管理.php">納品管理</a></li>
+                <li><a href="./顧客取込.php">顧客登録</a></li>
             </ul>
         </nav>
     </header>
@@ -294,12 +301,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                     </tbody>
                 </table>
                 <div class="text-end">
-                    <input type="button" value="+">
-                    <input type="button" value="-">
+                    <!-- ボタンのtypeをbuttonにしてJSで行追加/削除を制御 -->
+                    <input type="button" value="+" id="add-row-btn">
+                    <input type="button" value="-" id="remove-row-btn">
                 </div>
             </div>
             <div class="text-center">
-                <a href="./注文管理.html"><input type="button" class="btn btn-danger" value="戻る"></a>
+                <!-- 戻るボタンのリンク先を.html→.phpに修正 -->
+                <a href="./注文管理.php"><input type="button" class="btn btn-danger" value="戻る"></a>
                 <button type="submit" name="register" class="btn btn-success">登録</button>
             </div>
         </form>

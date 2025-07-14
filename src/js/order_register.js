@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 行削除機能 ---
     removeBtn?.addEventListener('click', function () {
+<<<<<<< HEAD
         // テーブルに行が1つしかない場合は削除しない (最低1行は必要)
         if (tbody && tbody.rows.length > 1) {
             const lastRow = tbody.rows[tbody.rows.length - 1];
@@ -77,6 +78,10 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (tbody && tbody.rows.length === 1) {
             // 最後の1行を削除しようとした場合
             alert('これ以上行を削除することはできません。');
+=======
+        if (tbody && tbody.rows.length > 5) { // 最低5行は残す
+            tbody.deleteRow(tbody.rows.length - 1);
+>>>>>>> a7889aec7928ec0ba2d1f2b320d86da38fe57414
         }
     });
 

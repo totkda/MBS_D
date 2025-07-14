@@ -1,3 +1,6 @@
+<?php
+// 納品登録画面（HTML→PHP化）
+?>
 <!DOCTYPE html>
 <html>
 
@@ -16,6 +19,41 @@
             display: inline;
         }
 
+        .container {
+            padding: 20px 0;
+        }
+
+        .main-nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 15px;
+        }
+
+        .main-nav a {
+            display: inline-block;
+            padding: 10px 24px;
+            font-family: "Helvetica", "Arial", sans-serif;
+            font-size: 16px;
+            color: #333;
+            background-color: #f4f4f4;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .main-nav a:hover {
+            background-color: #007bff;
+            color: #ffffff;
+            border-color: #0069d9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
         td input,
         textarea {
             width: 100%;
@@ -27,72 +65,13 @@
 
     <!-- ナビゲーションバー -->
     <header class="container text-center">
-        <nav>
-            <!DOCTYPE html>
-            <html lang="ja">
-            <head>
-              <meta charset="UTF-8">
-              <title>（ここにページのタイトルを入力）</title>
-            
-              <style>
-                /* ===============
-                   ナビゲーションバー
-                   =============== */
-            
-                .container {
-                  padding: 20px 0;
-                }
-            
-                .main-nav ul {
-                  display: flex;
-                  justify-content: center;
-                  list-style: none;
-                  margin: 0;
-                  padding: 0;
-                  gap: 15px;
-                }
-            
-                /* ナビゲーションボタンの基本スタイル */
-                .main-nav a {
-                  display: inline-block;
-                  padding: 10px 24px;
-                  font-family: "Helvetica", "Arial", sans-serif;
-                  font-size: 16px;
-                  color: #333;
-                  background-color: #f4f4f4;
-                  text-decoration: none;
-                  border: 1px solid #ddd;
-                  border-radius: 6px;
-                  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-                  transition: all 0.3s ease;
-                }
-            
-                /* ▼▼▼ この部分でカーソルが重なった時の色を指定 ▼▼▼ */
-                .main-nav a:hover {
-                  background-color: #007bff; /* 背景色を青に */
-                  color: #ffffff;           /* 文字色を白に */
-                  border-color: #0069d9;
-                  transform: translateY(-2px);
-                  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                }
-              </style>
-            
-            </head>
-            <body>
-            
-              <header class="container text-center">
-                <nav class="main-nav">
-                  <ul>
-                    <li><a href="./index.html">ホーム</a></li>
-                    <li><a href="./注文管理.html">注文管理</a></li>
-                    <li><a href="./納品管理.html">納品管理</a></li>
-                    <li><a href="./顧客取込.html">顧客登録</a></li>
-                  </ul>
-                </nav>
-              </header>
-            
-            </body>
-            </html>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="./index.html">ホーム</a></li>
+                <li><a href="./注文管理.html">注文管理</a></li>
+                <li><a href="./納品管理.html">納品管理</a></li>
+                <li><a href="./顧客取込.html">顧客登録</a></li>
+            </ul>
         </nav>
     </header>
 
@@ -122,11 +101,11 @@
             <div>
                 <table class="table table-bordered  border-dark  table-striped table-hover table-sm align-middle mb-0"">
                     <colgroup>
-                        <col style="width: 2%;">
-                        <col style="width: 42%;">
-                        <col style="width: 11%;">
-                        <col style="width: 11%;">
-                        <col style="width: 33%;">
+                        <col style=" width: 2%;">
+                    <col style="width: 42%;">
+                    <col style="width: 11%;">
+                    <col style="width: 11%;">
+                    <col style="width: 33%;">
                     </colgroup>
                     <thead class="table-dark table-bordered  border-light sticky-top">
                         <tr>
@@ -215,7 +194,7 @@
                     <button type="button" id="openModal" class="btn btn-primary" onclick="showForm()">項目追加</button>
                 </div>
                 <div class="d-flex justify-content-between">
-                    <a href="./納品管理.html"><button type="button" class="btn btn-danger">戻る</button></a>
+                    <button type="button" id="delivery-cansel-button" class="btn btn-danger">戻る</button>
                     <button type="button" id="delivery-insert-button" class="btn btn-success">登録</button>
                 </div>
             </div>
@@ -230,7 +209,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body d-flex">
-                        
+
                         <!--  検索フォーム  -->
                         <div class="card">
                             <div class="card-body">
@@ -240,12 +219,14 @@
                                 <div class="mt-4">
                                     <div class="mb-3">
                                         <div>注文日</div>
-                                        <input type="date" id="order-date-since" class="form-control" style="width: 80%; display: inline;">
+                                        <input type="date" id="order-date-since" class="form-control"
+                                            style="display: inline;">
                                         <label for="order-date-since" class="form-label">から</label><br>
-                                        <input type="date" id="order-date-until" class="form-control" style="width: 80%; display: inline;">
+                                        <input type="date" id="order-date-until" class="form-control"
+                                            style="display: inline;">
                                         <label for="order-date-until" class="form-label">まで</label><br>
                                     </div>
-                                    
+
                                     <input type="hidden" name="page" value="1">
                                     <input type="button" value="検索" class="btn btn-primary w-100"></button>
                                 </div>
@@ -271,7 +252,8 @@
                                 </div>
                             </div>
                             <div style="height: 180px; overflow-y: auto;">
-                                <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
+                                <table
+                                    class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
                                     <colgroup>
                                         <col style="width: 2%;">
                                         <col style="width: 30%;">
@@ -294,11 +276,11 @@
                                     <tbody>
                                         <tr>
                                             <td>1</td>
-                                            <td>週刊BCN 10/17</td>
+                                            <td><input type="text" value="週刊BCN 10/17" readonly></td>
                                             <td><input type="text" value="0"></td>
                                             <td>/</td>
-                                            <td>1</td>
-                                            <td>363</td>
+                                            <td><input type="text" value="1" readonly></td>
+                                            <td>&yen;<input type="text" style="width: 80%;" value="363" readonly></td>
                                             <td><input type="text" readonly></td>
                                             <td rowspan="15"><textarea rows="5" readonly></textarea></td>
                                         </tr>
@@ -367,16 +349,7 @@
         </div>
     </main>
 
-    <script>
-        $(function () {
-            $('#openModal').on('click', function () {
-                const modal = new bootstrap.Modal(document.getElementById('delivery-register-form'));
-                modal.show();
-            });
-        });
-    </script>
-
-    <!-- 登録二重確認 -->
+    <!-- モーダル・JSのみ残す -->
     <div class="modal fade" id="delivery-insert" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -397,15 +370,27 @@
             </div>
         </div>
     </div>
-
-    <script>
-        $(function () {
-            $('#delivery-insert-button').on('click', function () {
-                const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));
-                modal.show();
-            });
-        });
-    </script>
+    <div class="modal fade" id="delivery-cansel" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">納品書の作成を中断しますか？</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に中断して戻りますか？</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
+                                onclick="hideForm()">戻る</button></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./js/delivery_register.js"></script>
 </body>
 
 </html>
