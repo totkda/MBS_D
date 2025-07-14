@@ -116,59 +116,58 @@ try {
                     </div>
                 </form>
             </div>
-        </div>
-        <div>
-            <!-- 注文表 -->
             <div>
-                <div class="text-end">
-                    <a href="./order_register.php"><input type="button" class="btn btn-success" value="新規登録"></a>
-                </div>
-                <!-- メッセージ表示 -->
-                <?php if ($message): ?>
-                    <div class="alert alert-info"> <?= htmlspecialchars($message) ?> </div>
-                <?php endif; ?>
-                <!-- 表 -->
-                <div style="height: 500px; overflow-y: auto;">
-                    <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
-                        <caption align="top">注文書一覧</caption>
-                        <thead class="table-dark table-bordered border-light sticky-top">
-                            <tr>
-                                <th>No.</th>
-                                <th>顧客名</th>
-                                <th>注文日</th>
-                                <th>ステータス</th>
-                                <th></th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($orders as $order): ?>
+                <!-- 注文表 -->
+                <div>
+                    <div class="text-end">
+                        <a href="./order_register.php"><input type="button" class="btn btn-success" value="新規登録"></a>
+                    </div>
+                    <!-- メッセージ表示 -->
+                    <?php if ($message): ?>
+                        <div class="alert alert-info"> <?= htmlspecialchars($message) ?> </div>
+                    <?php endif; ?>
+                    <!-- 表 -->
+                    <div style="height: 500px; overflow-y: auto;">
+                        <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
+                            <caption align="top">注文書一覧</caption>
+                            <thead class="table-dark table-bordered border-light sticky-top">
                                 <tr>
-                                    <td><?= htmlspecialchars($order['order_id']) ?></td>
-                                    <td><?= htmlspecialchars($order['customer_name']) ?></td>
-                                    <td><?= htmlspecialchars($order['order_date']) ?></td>
-                                    <td><?= htmlspecialchars($order['status']) ?></td>
-                                    <td><a href="./order_detail.php?order_id=<?= urlencode($order['order_id']) ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                    <td>
-                                        <form method="post" style="display:inline;">
-                                            <input type="hidden" name="delete_order_id" value="<?= htmlspecialchars($order['order_id']) ?>">
-                                            <input type="submit" class="btn btn-danger" value="削除" onclick="return confirm('本当に削除しますか？');">
-                                        </form>
-                                    </td>
+                                    <th>No.</th>
+                                    <th>顧客名</th>
+                                    <th>注文日</th>
+                                    <th>ステータス</th>
+                                    <th></th>
+                                    <th></th>
                                 </tr>
-                            <?php endforeach; ?>
-                            <?php if (empty($orders)): ?>
-                                <tr>
-                                    <td colspan="6">該当データがありません</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($orders as $order): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($order['order_id']) ?></td>
+                                        <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                                        <td><?= htmlspecialchars($order['order_date']) ?></td>
+                                        <td><?= htmlspecialchars($order['status']) ?></td>
+                                        <td><a href="./order_detail.php?order_id=<?= urlencode($order['order_id']) ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
+                                        <td>
+                                            <form method="post" style="display:inline;">
+                                                <input type="hidden" name="delete_order_id" value="<?= htmlspecialchars($order['order_id']) ?>">
+                                                <input type="submit" class="btn btn-danger" value="削除" onclick="return confirm('本当に削除しますか？');">
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($orders)): ?>
+                                    <tr>
+                                        <td colspan="6">該当データがありません</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- ページング（省略） -->
+                    <div class="text-center" id="pagination-area"></div>
                 </div>
-                <!-- ページング（省略） -->
-                <div class="text-center" id="pagination-area"></div>
             </div>
-        </div>
     </main>
     <script src="/src/js/pagination.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
