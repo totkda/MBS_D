@@ -15,7 +15,7 @@
 <body>
     <!-- ナビゲーションバー -->
     <header class="container text-center">
-        <?php include 'navbar.php'; ?>
+        <?php include '../components/navbar.php'; ?>
         <!-- ショートカットキーをナビバー下に配置 -->
         <div class="text-center my-2">
             <a href="/src/php/order_register.php"><input type="button" class="btn btn-success" value="注文登録"></a>

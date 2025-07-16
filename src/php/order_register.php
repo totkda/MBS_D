@@ -19,7 +19,7 @@
 
 <body>
     <header class="container text-center">
-        <?php include 'navbar.php'; ?>
+        <?php include '../components/navbar.php'; ?>
     </header>
     <main class="container mt-5">
         <!-- エラー表示 -->
