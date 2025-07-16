@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
 <body>
     <!-- ナビゲーションバー -->
     <header class="container text-center">
-        <?php include 'navbar.php'; ?>
+        <?php include 'navbar.php' ?>
     </header>
     <main class="container mt-5">
         <!-- メッセージ表示 -->
