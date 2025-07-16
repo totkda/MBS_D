@@ -2,101 +2,11 @@
 // order_register.php
 // 注文登録画面（新規注文登録・バリデーション付き）
 
-// データベース接続情報
-$host = '127.0.0.1';
-$db   = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
 
-$errors = [];
-$success = false;
+// データベース接続情報
 
 // POST時：登録処理
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $customer_name = trim($_POST['customer_name'] ?? '');
-    $order_date = trim($_POST['order_date'] ?? '');
-    $order_no = trim($_POST['order_no'] ?? '');
-    $remarks = trim($_POST['remarks'] ?? '');
-    $items = $_POST['items'] ?? [];
 
-    // バリデーション
-    if ($customer_name === '') {
-        $errors[] = '顧客名は必須です。';
-    }
-    if ($order_date === '') {
-        $errors[] = '注文日を入力してください。';
-    }
-    if (!preg_match('/^\\d+$/', $order_no)) {
-        $errors[] = '注文No.は数字で入力してください。';
-    }
-    $has_item = false;
-    foreach ($items as $idx => $item) {
-        if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') {
-            continue; // 空行はスキップ
-        }
-        $has_item = true;
-        if (trim($item['product_name']) === '') {
-            $errors[] = ($idx + 1) . '行目の品名は必須です。';
-        }
-        if (!preg_match('/^\\d+$/', $item['quantity'])) {
-            $errors[] = ($idx + 1) . '行目の数量は数字で入力してください。';
-        }
-        if (!preg_match('/^\\d+(\\.\\d+)?$/', $item['unit_price'])) {
-            $errors[] = ($idx + 1) . '行目の単価は数値で入力してください。';
-        }
-    }
-    if (!$has_item) {
-        $errors[] = '1件以上の商品を入力してください。';
-    }
-
-    if (!$errors) {
-        try {
-            $pdo = new PDO($dsn, $user, $pass, $options);
-            $pdo->beginTransaction();
-            // 注文テーブル登録
-            $stmt = $pdo->prepare('INSERT INTO orders (customer_name, order_date, order_no, remarks) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$customer_name, $order_date, $order_no, $remarks]);
-            $order_id = $pdo->lastInsertId();
-            // 明細登録
-            $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_name, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)');
-            foreach ($items as $item) {
-                if (trim($item['product_name']) === '' && trim($item['quantity']) === '' && trim($item['unit_price']) === '') continue;
-                $stmt->execute([
-                    $order_id,
-                    trim($item['product_name']),
-                    intval($item['quantity']),
-                    floatval($item['unit_price']),
-                    trim($item['note'])
-                ]);
-            }
-            $pdo->commit();
-            $success = true;
-        } catch (PDOException $e) {
-            $errors[] = 'DBエラー: ' . $e->getMessage();
-        }
-    }
-}
-// 初期値
-if (!isset($customer_name)) $customer_name = '';
-if (!isset($order_date)) $order_date = date('Y-m-d');
-if (!isset($order_no)) $order_no = '';
-if (!isset($remarks)) $remarks = '';
-if (!isset($items) || !is_array($items) || count($items) === 0) {
-    $items = [
-        ['product_name' => '', 'quantity' => '', 'unit_price' => '', 'note' => ''],
-        ['product_name' => '', 'quantity' => '', 'unit_price' => '', 'note' => ''],
-        ['product_name' => '', 'quantity' => '', 'unit_price' => '', 'note' => ''],
-        ['product_name' => '', 'quantity' => '', 'unit_price' => '', 'note' => ''],
-        ['product_name' => '', 'quantity' => '', 'unit_price' => '', 'note' => ''],
-    ];
-}
 ?>
 <!DOCTYPE html>
 <html lang="ja">
