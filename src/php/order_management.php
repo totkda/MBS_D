@@ -2,19 +2,8 @@
 // order_management.php
 // 注文管理画面：注文の検索・一覧表示・削除
 
-
-// DB接続設定
-$host = '127.0.0.1';
-$db = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+// DB接続共通化
+require_once __DIR__ . '/../db_connect.php';
 
 // 検索条件取得
 $order_date_since = $_GET['order_date_since'] ?? '';
@@ -25,7 +14,7 @@ $branch_name = $_GET['branch_name'] ?? '';
 $message = '';
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    // $pdoはdb_connect.phpで生成済み
     // 削除処理
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_id'])) {
         $delete_order_id = $_POST['delete_order_id'];
@@ -66,11 +55,11 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 
 <head>
     <meta charset="UTF-8">
-    <title>MBSアプリ - 注文管理</title>
+    <title>MBSアプリ | 注文管理</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* ...既存のCSS... */
@@ -117,61 +106,59 @@ try {
                 </form>
             </div>
         </div>
+        <!-- 注文表 -->
         <div>
-            <!-- 注文表 -->
-            <div>
-                <div class="text-end">
-                    <a href="./order_register.php"><input type="button" class="btn btn-success" value="新規登録"></a>
-                </div>
-                <!-- メッセージ表示 -->
-                <?php if ($message): ?>
-                    <div class="alert alert-info"> <?= htmlspecialchars($message) ?> </div>
-                <?php endif; ?>
-                <!-- 表 -->
-                <div style="height: 500px; overflow-y: auto;">
-                    <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
-                        <caption align="top">注文書一覧</caption>
-                        <thead class="table-dark table-bordered border-light sticky-top">
-                            <tr>
-                                <th>No.</th>
-                                <th>顧客名</th>
-                                <th>注文日</th>
-                                <th>ステータス</th>
-                                <th></th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($orders as $order): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($order['order_id']) ?></td>
-                                    <td><?= htmlspecialchars($order['customer_name']) ?></td>
-                                    <td><?= htmlspecialchars($order['order_date']) ?></td>
-                                    <td><?= htmlspecialchars($order['status']) ?></td>
-                                    <td><a href="./order_detail.php?order_id=<?= urlencode($order['order_id']) ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                    <td>
-                                        <form method="post" style="display:inline;">
-                                            <input type="hidden" name="delete_order_id" value="<?= htmlspecialchars($order['order_id']) ?>">
-                                            <input type="submit" class="btn btn-danger" value="削除" onclick="return confirm('本当に削除しますか？');">
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <?php if (empty($orders)): ?>
-                                <tr>
-                                    <td colspan="6">該当データがありません</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- ページング（省略） -->
-                <div class="text-center" id="pagination-area"></div>
+            <div class="text-end">
+                <a href="./order_register.php"><input type="button" class="btn btn-success" value="新規登録"></a>
             </div>
+            <!-- メッセージ表示 -->
+            <?php if ($message): ?>
+                <div class="alert alert-info"> <?= htmlspecialchars($message) ?> </div>
+            <?php endif; ?>
+            <!-- 表 -->
+            <div style="height: 500px; overflow-y: auto;">
+                <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
+                    <caption align="top">注文書一覧</caption>
+                    <thead class="table-dark table-bordered border-light sticky-top">
+                        <tr>
+                            <th>No.</th>
+                            <th>顧客名</th>
+                            <th>注文日</th>
+                            <th>ステータス</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orders as $order): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($order['order_id']) ?></td>
+                                <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                                <td><?= htmlspecialchars($order['order_date']) ?></td>
+                                <td><?= htmlspecialchars($order['status']) ?></td>
+                                <td><a href="./order_detail.php?order_id=<?= urlencode($order['order_id']) ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
+                                <td>
+                                    <form method="post" style="display:inline;">
+                                        <input type="hidden" name="delete_order_id" value="<?= htmlspecialchars($order['order_id']) ?>">
+                                        <input type="submit" class="btn btn-danger" value="削除" onclick="return confirm('本当に削除しますか？');">
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($orders)): ?>
+                            <tr>
+                                <td colspan="6">該当データがありません</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <!-- ページング（省略） -->
+            <div class="text-center" id="pagination-area"></div>
+        </div>
         </div>
     </main>
-    <script src="./js/pagination.js"></script>
-    <!-- 必要なJSの読み込み -->
+    <script src="/src/js/pagination.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
