@@ -6,63 +6,9 @@
 // エラー時やデータなし時の表示も考慮
 // レイアウトやナビゲーションは元のHTMLを踏襲
 
-
 // DB接続情報
-$host = '127.0.0.1';
-$db   = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
-
-// 検索条件取得
-$delivery_date_since = $_GET['delivery_date_since'] ?? '';
-$delivery_date_until = $_GET['delivery_date_until'] ?? '';
-$customer_name = $_GET['customer_name'] ?? '';
-$status = $_GET['status'] ?? '';
-$branch_name = $_GET['branch_name'] ?? '';
-
-// SQL生成
-$where = [];
-$params = [];
-if ($delivery_date_since !== '') {
-    $where[] = 'delivery_date >= :since';
-    $params[':since'] = $delivery_date_since;
-}
-if ($delivery_date_until !== '') {
-    $where[] = 'delivery_date <= :until';
-    $params[':until'] = $delivery_date_until;
-}
-if ($customer_name !== '') {
-    $where[] = 'customer_name LIKE :customer_name';
-    $params[':customer_name'] = "%$customer_name%";
-}
-if ($status !== '' && $status !== 'すべて') {
-    $where[] = 'status = :status';
-    $params[':status'] = $status;
-}
-if ($branch_name !== '') {
-    $where[] = 'branch_name LIKE :branch_name';
-    $params[':branch_name'] = "%$branch_name%";
-}
-$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-
-// データ取得
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-    $sql = "SELECT id, customer_name, delivery_date, amount, status FROM deliveries $where_sql ORDER BY delivery_date DESC LIMIT 50";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $deliveries = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $error = $e->getMessage();
-    $deliveries = [];
-}
+require_once __DIR__ . '/../db_connect.php';
+// 検索条件の初期化
 ?>
 <!DOCTYPE html>
 <html lang="ja">
