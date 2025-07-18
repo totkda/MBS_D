@@ -1,3 +1,21 @@
+<?php
+require_once __DIR__ . '/db_connect.php';
+$order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
+$order_details = [];
+$order_info = [];
+if ($order_id > 0) {
+    // 注文明細
+    $sql = 'SELECT od.*, p.short_name, p.product_name FROM order_details od LEFT JOIN products p ON od.product_id = p.product_id WHERE od.order_id = ?';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$order_id]);
+    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // 注文基本情報（orders + customers）
+    $sql2 = 'SELECT o.order_date, o.order_id, c.customer_name FROM orders o LEFT JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_id = ?';
+    $stmt2 = $pdo->prepare($sql2);
+    $stmt2->execute([$order_id]);
+    $order_info = $stmt2->fetch(PDO::FETCH_ASSOC);
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -19,7 +37,7 @@
         .container {
             padding: 20px 0;
         }
-            
+
         .main-nav ul {
             display: flex;
             justify-content: center;
@@ -28,8 +46,8 @@
             padding: 0;
             gap: 15px;
         }
-            
-            /* ナビゲーションボタンの基本スタイル */
+
+        /* ナビゲーションボタンの基本スタイル */
         .main-nav a {
             display: inline-block;
             padding: 10px 24px;
@@ -43,11 +61,13 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-            
+
         /* ▼▼▼ この部分でカーソルが重なった時の色を指定 ▼▼▼ */
         .main-nav a:hover {
-            background-color: #007bff; /* 背景色を青に */
-            color: #ffffff;           /* 文字色を白に */
+            background-color: #007bff;
+            /* 背景色を青に */
+            color: #ffffff;
+            /* 文字色を白に */
             border-color: #0069d9;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -75,14 +95,14 @@
             </div>
             <div class="d-flex justify-content-between">
                 <span>注文書</span>
-                <input type="date">
+                <input type="date" value="<?= htmlspecialchars($order_info['order_date'] ?? '') ?>">
                 <span>
                     <label for="customer-order-no">No.</label>
-                    <input type="text" id="customer-order-no" size="4" readonly>
+                    <input type="text" id="customer-order-no" size="4" readonly value="<?= htmlspecialchars($order_info['order_id'] ?? '') ?>">
                 </span>
             </div>
             <div>
-                <input type="text" id="customer-name">
+                <input type="text" id="customer-name" value="<?= htmlspecialchars($order_info['customer_name'] ?? '') ?>">
                 <label for="customer-name">様</label>
             </div>
             <div>
@@ -110,42 +130,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td><input type="text" value="週刊BCN 10/17"></td>
-                        <td><input type="text" value="1"></td>
-                        <td>&yen;<input type="text" style="width: 90%;" value="363"></td>
-                        <td><input type="text"></td>
-                        <td rowspan="15"><textarea rows="5"></textarea></td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td>&yen;<input type="text" style="width: 90%;"></td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td>&yen;<input type="text" style="width: 90%;"></td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>4</td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td>&yen;<input type="text" style="width: 90%;"></td>
-                        <td><input type="text"></td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td><input type="text"></td>
-                        <td><input type="text"></td>
-                        <td>&yen;<input type="text" style="width: 90%;"></td>
-                        <td><input type="text"></td>
-                    </tr>
+                    <?php if ($order_id > 0 && $order_details): ?>
+                        <?php foreach ($order_details as $i => $detail): ?>
+                            <tr>
+                                <td><?= $i + 1 ?></td>
+                                <td>
+                                    <input type="text" value="<?php if (!empty($detail['short_name']) && !empty($detail['product_name'])): ?><?= htmlspecialchars($detail['short_name']) ?>（<?= htmlspecialchars($detail['product_name']) ?>）<?php else: ?><?= htmlspecialchars($detail['product_id'] ?? '') ?><?php endif; ?>">
+                                </td>
+                                <td><input type="text" value="<?= htmlspecialchars($detail['quantity'] ?? '') ?>"></td>
+                                <td>&yen;<input type="text" style="width: 90%;" value="<?= htmlspecialchars($detail['unit_price'] ?? '') ?>"></td>
+                                <td><input type="text" value="<?= htmlspecialchars($detail['note'] ?? '') ?>"></td>
+                                <td rowspan="1"><textarea rows="2"><?= htmlspecialchars($detail['remarks'] ?? '') ?></textarea></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6">注文明細がありません</td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -219,27 +221,27 @@
     </div>
 
     <!-- JS読み込み（jQuery → Bootstrap） -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ポップアップ表示のスクリプト -->
-<script>
-    $(function () {
-        $('#order-insert-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-insert'));
-            modal.show();
-        });
+    <!-- ポップアップ表示のスクリプト -->
+    <script>
+        $(function() {
+            $('#order-insert-button').on('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('order-insert'));
+                modal.show();
+            });
 
-        $('#order-cansel-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-cansel'));
-            modal.show();
+            $('#order-cansel-button').on('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('order-cansel'));
+                modal.show();
+            });
+            $('#order-delete-button').on('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('order-delete'));
+                modal.show();
+            });
         });
-        $('#order-delete-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-delete'));
-            modal.show();
-        });
-    });
-</script>
+    </script>
 </body>
 
 </html>
