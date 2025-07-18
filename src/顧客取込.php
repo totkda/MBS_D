@@ -1,3 +1,39 @@
+<?php
+require_once(__DIR__ . '/db_connect.php');
+require_once(__DIR__ . '/vendor/autoload.php'); // PhpSpreadsheet利用（composerでインストール必要）
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+$import_message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
+    $file = $_FILES['customer_file']['tmp_name'];
+    try {
+        $spreadsheet = IOFactory::load($file);
+        $sheet = $spreadsheet->getActiveSheet();
+        $pdo->beginTransaction();
+        foreach ($sheet->getRowIterator(2) as $row) { // 1行目はヘッダー
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false);
+            $data = [];
+            foreach ($cellIterator as $cell) {
+                $data[] = $cell->getValue();
+            }
+            // $data: [顧客ID, 顧客名, 支店ID, 電話番号, 郵便番号, 住所, 登録日, 備考]
+            if (!empty($data[0])) {
+                $stmt = $pdo->prepare("REPLACE INTO customers (customer_id, customer_name, branch_id, phone_number, postal_code, address, registration_date, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([
+                    $data[0], $data[1], $data[2], $data[3], $data[4], $data[5], $data[6], $data[7]
+                ]);
+            }
+        }
+        $pdo->commit();
+        $import_message = '<div class="alert alert-success">顧客情報を取り込みました。</div>';
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $import_message = '<div class="alert alert-danger">取り込みエラー: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -68,13 +104,14 @@
     </header>
 
     <main class="container mt-5">
-        <div>
+        <?php echo $import_message; ?>
+        <form method="post" enctype="multipart/form-data">
             <div>顧客表のファイルを選択してください</div>
-            <input type="file" class="mt-2">
-        </div>
-        <div class="text-center mt-3">
-            <input type="button" id="client-insert-button" class="btn btn-success" value="取り込む">
-        </div>
+            <input type="file" name="customer_file" class="mt-2" accept=".xlsx,.xls">
+            <div class="text-center mt-3">
+                <input type="submit" id="client-insert-button" class="btn btn-success" value="取り込む">
+            </div>
+        </form>
     </main>
 
     <div class="modal fade" id="client-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
@@ -106,3 +143,10 @@
 </body>
 
 </html>
+<!-- このエラーは「PhpSpreadsheet」がインストールされていない場合や、autoload.phpのパスが間違っている場合に出ます。
+// 対策:
+// 1. コマンドラインで以下を実行してライブラリをインストールしてください。
+//    composer require phpoffice/phpspreadsheet
+// 2. autoload.phpのパスが正しいか確認してください。
+//    require_once(__DIR__ . '/vendor/autoload.php'); // vendorディレクトリがsrcの直下にある場合
+//    もしプロジェクト直下なら require_once(__DIR__ . '/../vendor/autoload.php'); などに修正してください。 -->

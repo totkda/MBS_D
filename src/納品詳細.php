@@ -1,3 +1,27 @@
+<?php
+require_once(__DIR__ . '/db_connect.php');
+
+// 納品ID取得
+$delivery_id = isset($_GET['delivery_id']) ? intval($_GET['delivery_id']) : 0;
+
+// 削除処理
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $delivery_id > 0) {
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare("DELETE FROM delivery_details WHERE delivery_id = ?");
+        $stmt->execute([$delivery_id]);
+        $stmt = $pdo->prepare("DELETE FROM deliveries WHERE delivery_id = ?");
+        $stmt->execute([$delivery_id]);
+        $pdo->commit();
+        // 削除後は管理画面にリダイレクト
+        header("Location: 納品管理.html");
+        exit;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $delete_message = '<div class="alert alert-danger">削除エラー: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 
@@ -68,13 +92,14 @@
     </header>
 
     <main class="container mt-5">
+        <?php echo $delete_message ?? ''; ?>
         <div>
             <div class="text-end">
                 <input type="button" class="btn btn-primary" value="pdfダウンロード">
                 <input type="button" id="delivery-delete-button" class="btn btn-danger" value="削除">
             </div>
         </div>
-        <form>
+        <form method="post">
             <div>
                 <div class="d-flex justify-content-between">
                     <span>納品書</span>
@@ -244,11 +269,10 @@
                     <div>本当に削除しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                    <div class="text-end">
-                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
-                                onclick="hideForm()">削除する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
-                    </div>
+                    <form method="post" style="display:inline;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                        <button type="submit" name="delete" class="btn btn-danger">削除する</button>
+                    </form>
                 </div>
             </div>
         </div>

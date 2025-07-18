@@ -1,135 +1,50 @@
 <?php
 // 注文管理.php
 
-// DB接続情報
-$host = 'localhost';
-$db   = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
+// db_connect.php を利用
+require_once(__DIR__ . '/db_connect.php'); // ここで$pdoが使える
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
+// ページング用
+$page  = intval($_GET['page'] ?? 1);
+$limit = 10;
+$offset = ($page - 1) * $limit;
 
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    // DB接続失敗時はエラーメッセージを表示して終了
-    die('DB接続失敗: ' . $e->getMessage());
-}
-
-// GETリクエストで検索条件を受信
-$orderDateSince = $_GET['orderDateSince'] ?? '';
-$orderDateUntil = $_GET['orderDateUntil'] ?? '';
-$customerName   = $_GET['customerName'] ?? '';
-$status         = $_GET['status'] ?? 'すべて'; // デフォルトは「すべて」
-$branchName     = $_GET['branchName'] ?? '';
-$page           = intval($_GET['page'] ?? 1); // ページング用
-$limit          = 10; // 1ページあたりの表示件数 (任意)
-$offset         = ($page - 1) * $limit;
-
-// SQLクエリの構築
+// データ取得（orders, customers, deliveries, branchesを結合して一覧表示）
 $sql = "SELECT
-            o.order_id,
-            o.order_date,
-            c.customer_name,
-            -- 納品ステータスは関連する納品があれば取得、なければNULL
-            MAX(d.delivery_status_name) AS delivery_status_name,
-            o.note AS order_note
-        FROM
-            orders o
-        LEFT JOIN
-            customers c ON o.customer_id = c.customer_id
-        LEFT JOIN
-            order_delivery_map odm ON o.order_id = odm.order_id
-        LEFT JOIN
-            deliveries d ON odm.delivery_id = d.delivery_id
-        LEFT JOIN
-            branches b ON c.branch_id = b.branch_id
-        WHERE 1=1";
-
-$params = [];
-
-// 注文日期間
-if (!empty($orderDateSince)) {
-    $sql .= " AND o.order_date >= ?";
-    $params[] = $orderDateSince;
-}
-if (!empty($orderDateUntil)) {
-    $sql .= " AND o.order_date <= ?";
-    $params[] = $orderDateUntil;
-}
-
-// 顧客名 (部分一致検索)
-if (!empty($customerName)) {
-    $sql .= " AND c.customer_name LIKE ?";
-    $params[] = '%' . $customerName . '%';
-}
-
-// ステータス
-if ($status !== 'すべて') {
-    if ($status === '未納品') {
-        // 関連する納品が存在しない、または、関連する納品が「納品済」ではない
-        $sql .= " AND (d.delivery_id IS NULL OR d.delivery_status_name != '納品済')";
-    } elseif ($status === '納品済') {
-        // 関連する納品が存在し、かつ「納品済」である
-        $sql .= " AND d.delivery_id IS NOT NULL AND d.delivery_status_name = '納品済'";
-    }
-}
-
-// 支店名 (部分一致検索)
-if (!empty($branchName)) {
-    $sql .= " AND b.branch_name LIKE ?";
-    $params[] = '%' . $branchName . '%';
-}
-
-// グループ化と並び替え
-$sql .= " GROUP BY o.order_id ORDER BY o.order_date DESC, o.order_id DESC";
-
-// ページングのための合計件数取得
-// サブクエリとして利用するため、LIMIT/OFFSETは含まない
-$countSql = "SELECT COUNT(DISTINCT o.order_id) FROM (" . $sql . ") AS subquery_for_count";
-$countParams = $params; // クエリパラメータは共通
+    o.order_id,
+    o.order_date,
+    c.customer_name,
+    b.branch_name,
+    COALESCE(MAX(d.delivery_status_name), '未納品') AS delivery_status_name,
+    o.note AS order_note
+FROM
+    orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+LEFT JOIN branches b ON c.branch_id = b.branch_id
+LEFT JOIN order_delivery_map odm ON o.order_id = odm.order_id
+LEFT JOIN deliveries d ON odm.delivery_id = d.delivery_id
+GROUP BY o.order_id
+ORDER BY o.order_date DESC, o.order_id DESC
+LIMIT ? OFFSET ?";
 
 try {
-    $countStmt = $pdo->prepare($countSql);
-    // LIMIT/OFFSETパラメータを削除した配列を渡す
-    // $sqlの最後にLIMIT/OFFSETを付与するため、$paramsに既に含まれている
-    // そのため、countStmtのexecuteにはそれらを含まない$countParamsを渡す
-    $countStmt->execute(array_slice($countParams, 0, count($countParams) - 2)); 
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $totalRecords = $countStmt->fetchColumn();
+    // ページング用の総件数取得
+    $countSql = "SELECT COUNT(*) FROM orders";
+    $totalRecords = $pdo->query($countSql)->fetchColumn();
     $totalPages = ceil($totalRecords / $limit);
 
-    // データの取得 (LIMITとOFFSETを適用)
-    $sql .= " LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    $orders = $stmt->fetchAll();
-
-    // 表示用のステータス調整 (未納品の場合)
-    foreach ($orders as &$order) {
-        if (empty($order['delivery_status_name'])) {
-            $order['delivery_status_name'] = '未納品';
-        }
-    }
-    unset($order); // 参照を解除
-
 } catch (PDOException $e) {
-    // データ取得エラー
-    $orders = []; // データがないことを示す
+    error_log("データ取得エラー: " . $e->getMessage());
+    $orders = [];
     $totalRecords = 0;
-    $totalPages = 0;
-    error_log('データ取得エラー: ' . $e->getMessage() . ' (SQLSTATE: ' . $e->getCode() . ')');
+    $totalPages = 1;
 }
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -251,6 +166,7 @@ try {
                                 <tr>
                                     <th>No.</th>
                                     <th>顧客名</th>
+                                    <th>支店名</th>
                                     <th>注文日</th>
                                     <th>ステータス</th>
                                     <th>詳細</th> 
@@ -263,6 +179,7 @@ try {
                                     <tr>
                                         <td><?php echo htmlspecialchars($order['order_id']); ?></td>
                                         <td><?php echo htmlspecialchars($order['customer_name'] ?? '未登録顧客'); ?></td>
+                                        <td><?php echo htmlspecialchars($order['branch_name'] ?? ''); ?></td>
                                         <td><?php echo htmlspecialchars($order['order_date']); ?></td>
                                         <td><?php echo htmlspecialchars($order['delivery_status_name'] ?? '未納品'); ?></td>
                                         <td><a href="./注文詳細.php?order_id=<?php echo htmlspecialchars($order['order_id']); ?>"><button type="button" class="btn btn-primary btn-sm">詳細</button></a></td>
@@ -270,7 +187,7 @@ try {
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <tr><td colspan="6" class="text-center">該当する注文がありません。</td></tr>
+                                    <tr><td colspan="7" class="text-center">該当する注文がありません。</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -373,3 +290,71 @@ try {
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
+
+<!-- 編集用モーダル (例) -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editOrderModalLabel">注文情報編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 編集フォーム (例) -->
+                <form id="edit-order-form">
+                    <div class="mb-3">
+                        <label for="edit-customer-name" class="form-label">顧客名</label>
+                        <input type="text" class="form-control" id="edit-customer-name" name="customer_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-order-date" class="form-label">注文日</label>
+                        <input type="date" class="form-control" id="edit-order-date" name="order_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-delivery-status" class="form-label">納品ステータス</label>
+                        <select class="form-select" id="edit-delivery-status" name="delivery_status">
+                            <option value="未納品">未納品</option>
+                            <option value="納品済">納品済</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-order-note" class="form-label">備考</label>
+                        <textarea class="form-control" id="edit-order-note" name="order_note"></textarea>
+                    </div>
+                    <input type="hidden" id="edit-order-id" name="order_id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                <div class="text-end">
+                    <a href="./注文管理.php">
+                        <button type="button" class="btn btn-success" onclick="hideForm()">編集完了する</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 編集モーダル表示
+    function showEditModal(order) {
+        document.getElementById('edit-order-id').value = order.order_id;
+        document.getElementById('edit-customer-name').value = order.customer_name;
+        document.getElementById('edit-order-date').value = order.order_date;
+        document.getElementById('edit-delivery-status').value = order.delivery_status_name === '納品済' ? '納品済' : '未納品';
+        document.getElementById('edit-order-note').value = order.order_note;
+
+        const myModal = new bootstrap.Modal(document.getElementById('editOrderModal'));
+        myModal.show();
+    }
+
+    // 編集完了時の処理
+    function hideForm() {
+        const myModalEl = document.getElementById('editOrderModal');
+        const modal = bootstrap.Modal.getInstance(myModalEl);
+        if (modal) {
+            modal.hide();
+        }
+    }
+</script>

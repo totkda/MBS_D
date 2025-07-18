@@ -1,26 +1,8 @@
 <?php
 // 納品管理.php
 
-// DB接続情報
-$host = 'localhost';
-$db   = 'mbs';
-$user = 'root';
-$pass = '';
-$charset = 'utf8mb4';
-
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    // DB接続失敗時はエラーメッセージを表示して終了
-    die('DB接続失敗: ' . $e->getMessage());
-}
+// db_connect.php を利用
+require_once(__DIR__ . '/db_connect.php'); // ここで$pdoが使える
 
 // GETリクエストで検索条件を受信
 $deliveryDateSince = $_GET['deliveryDateSince'] ?? ''; // 納品日期間の開始
@@ -33,94 +15,145 @@ $limit             = 10; // 1ページあたりの表示件数 (任意)
 $offset            = ($page - 1) * $limit;
 
 // SQLクエリの構築
-// 納品書一覧なので、deliveriesテーブルが主
-$sql = "SELECT
-            d.delivery_id,
-            d.delivery_date,
-            c.customer_name,
-            d.delivery_status_name,
-            -- 金額はdelivery_detailsから計算する必要がある
-            SUM(dd.quantity * od.unit_price) AS total_amount -- order_detailsの単価を使用
-        FROM
-            deliveries d
-        LEFT JOIN
-            customers c ON d.customer_id = c.customer_id
-        LEFT JOIN
-            branches b ON c.branch_id = b.branch_id
-        LEFT JOIN
-            delivery_details dd ON d.delivery_id = dd.delivery_id
-        LEFT JOIN
-            order_delivery_map odm ON d.delivery_id = odm.delivery_id
-        LEFT JOIN
-            order_details od ON odm.order_id = od.order_id AND dd.product_id = od.product_id
-        WHERE 1=1";
+$sql_base = "FROM
+    deliveries d
+    LEFT JOIN customers c ON d.customer_id = c.customer_id
+    LEFT JOIN branches b ON c.branch_id = b.branch_id
+    LEFT JOIN delivery_details dd ON d.delivery_id = dd.delivery_id
+    LEFT JOIN order_delivery_map odm ON d.delivery_id = odm.delivery_id
+    LEFT JOIN order_details od ON odm.order_id = od.order_id AND dd.product_id = od.product_id
+    WHERE 1=1";
 
+$where = "";
 $params = [];
 
 // 納品日期間
 if (!empty($deliveryDateSince)) {
-    $sql .= " AND d.delivery_date >= ?";
+    $where .= " AND d.delivery_date >= ?";
     $params[] = $deliveryDateSince;
 }
 if (!empty($deliveryDateUntil)) {
-    $sql .= " AND d.delivery_date <= ?";
+    $where .= " AND d.delivery_date <= ?";
     $params[] = $deliveryDateUntil;
 }
 
 // 顧客名 (部分一致検索)
 if (!empty($customerName)) {
-    $sql .= " AND c.customer_name LIKE ?";
+    $where .= " AND c.customer_name LIKE ?";
     $params[] = '%' . $customerName . '%';
 }
 
-// ステータス (delivery_status_nameはdeliveriesテーブルに直接ある)
+// ステータス
 if ($status !== 'すべて') {
-    $sql .= " AND d.delivery_status_name = ?";
+    $where .= " AND d.delivery_status_name = ?";
     $params[] = $status;
 }
 
-// 支店名 (部分一致検索)
+// 支店名
 if (!empty($branchName)) {
-    $sql .= " AND b.branch_name LIKE ?";
+    $where .= " AND b.branch_name LIKE ?";
     $params[] = '%' . $branchName . '%';
 }
 
-// グループ化と並び替え
-$sql .= " GROUP BY d.delivery_id, d.delivery_date, c.customer_name, d.delivery_status_name
-          ORDER BY d.delivery_date DESC, d.delivery_id DESC";
-
-// ページングのための合計件数取得
-// 元のSQLからLIMIT/OFFSETを除いたものをサブクエリとして利用
-$countSql = "SELECT COUNT(DISTINCT d.delivery_id) FROM (" . $sql . ") AS subquery_for_count";
-// $params配列からLIMITとOFFSETを削除したものを渡す
-$countParams = $params;
-if (count($countParams) >= 2) {
-    array_pop($countParams);
-    array_pop($countParams);
+// 件数取得用SQL
+$countSql = "SELECT COUNT(*) FROM deliveries d WHERE 1=1";
+$countParams = [];
+if (!empty($deliveryDateSince)) {
+    $countSql .= " AND d.delivery_date >= ?";
+    $countParams[] = $deliveryDateSince;
+}
+if (!empty($deliveryDateUntil)) {
+    $countSql .= " AND d.delivery_date <= ?";
+    $countParams[] = $deliveryDateUntil;
+}
+if (!empty($customerName)) {
+    $countSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE customer_name LIKE ?)";
+    $countParams[] = '%' . $customerName . '%';
+}
+if ($status !== 'すべて') {
+    $countSql .= " AND d.delivery_status_name = ?";
+    $countParams[] = $status;
+}
+if (!empty($branchName)) {
+    $countSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE branch_id IN (SELECT branch_id FROM branches WHERE branch_name LIKE ?))";
+    $countParams[] = '%' . $branchName . '%';
 }
 
+// データ取得用SQL
+$dataSql = "SELECT d.* FROM deliveries d WHERE 1=1";
+$dataParams = [];
+if (!empty($deliveryDateSince)) {
+    $dataSql .= " AND d.delivery_date >= ?";
+    $dataParams[] = $deliveryDateSince;
+}
+if (!empty($deliveryDateUntil)) {
+    $dataSql .= " AND d.delivery_date <= ?";
+    $dataParams[] = $deliveryDateUntil;
+}
+if (!empty($customerName)) {
+    $dataSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE customer_name LIKE ?)";
+    $dataParams[] = '%' . $customerName . '%';
+}
+if ($status !== 'すべて') {
+    $dataSql .= " AND d.delivery_status_name = ?";
+    $dataParams[] = $status;
+}
+if (!empty($branchName)) {
+    $dataSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE branch_id IN (SELECT branch_id FROM branches WHERE branch_name LIKE ?))";
+    $dataParams[] = '%' . $branchName . '%';
+}
+$dataSql .= " ORDER BY d.delivery_date DESC, d.delivery_id DESC LIMIT ? OFFSET ?";
+$dataParams[] = $limit;
+$dataParams[] = $offset;
 
+// 件数取得
 try {
     $countStmt = $pdo->prepare($countSql);
-    $countStmt->execute($params); // countParamsではなく、paramsを渡す
+    $countStmt->execute($countParams);
     $totalRecords = $countStmt->fetchColumn();
-    $totalPages = ceil($totalRecords / $limit);
+    $totalPages = max(1, ceil($totalRecords / $limit)); // 0件でも1ページにする
 
-    // データの取得 (LIMITとOFFSETを適用)
-    $sql .= " LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    // データ取得
+    $stmt = $pdo->prepare($dataSql);
+    // LIMIT, OFFSETはint型でバインドする
+    $stmt->bindValue(count($dataParams)-1, (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(count($dataParams), (int)$offset, PDO::PARAM_INT);
+    for ($i = 0; $i < count($dataParams)-2; $i++) {
+        $stmt->bindValue($i+1, $dataParams[$i]);
+    }
+    $stmt->execute();
     $deliveries = $stmt->fetchAll();
 
+    // デバッグ用: 取得件数と1件目の内容を画面に表示
+    // echo '<pre style="color:red;">';
+    // echo 'delivery取得件数: ' . count($deliveries) . "\n";
+    // if (!empty($deliveries)) {
+    //     print_r($deliveries[0]);
+    // }
+    // echo '</pre>';
+
+    // 追加: SQLとパラメータも表示
+    // echo '<pre style="color:blue;">';
+    // echo "countSql: " . $countSql . "\n";
+    // echo "countParams: "; print_r($countParams);
+    // echo "dataSql: " . $dataSql . "\n";
+    // echo "dataParams: "; print_r($dataParams);
+    // echo '</pre>';
+
+    // デバッグ: DBの接続状態
+    // try {
+    //     $pdo->query('SELECT 1');
+    //     echo '<pre style="color:purple;">DB接続: OK</pre>';
+    // } catch (Exception $ex) {
+    //     echo '<pre style="color:purple;">DB接続: NG - ' . $ex->getMessage() . '</pre>';
+    // }
+
 } catch (PDOException $e) {
-    // データ取得エラー
-    $deliveries = []; // データがないことを示す
+    $deliveries = [];
     $totalRecords = 0;
-    $totalPages = 0;
+    $totalPages = 1;
     error_log('データ取得エラー: ' . $e->getMessage() . ' (SQLSTATE: ' . $e->getCode() . ')');
+    echo '<pre style="color:orange;">データ取得エラー: ' . $e->getMessage() . '</pre>';
 }
 
 ?>
