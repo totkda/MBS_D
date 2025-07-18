@@ -21,7 +21,7 @@ require_once __DIR__ . '/../db_connect.php';
 
 <body>
     <header class="container text-center">
-        <?php include 'navbar.php'; ?>
+        <?php include '../components/navbar.php'; ?>
     </header>
     <main class="container mt-5 d-flex">
         <!-- 検索フォーム -->
