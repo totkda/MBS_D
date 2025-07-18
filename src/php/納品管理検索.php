@@ -48,27 +48,3 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
-<!-- HTMLで結果を表示 -->
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>顧客名</th>
-            <th>注文日</th>
-            <th>支店名</th>
-            <th>ステータス</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($results as $row): ?>
-            <tr>
-                <td><?= htmlspecialchars($row['id']) ?></td>
-                <td><?= htmlspecialchars($row['customer_name']) ?></td>
-                <td><?= htmlspecialchars($row['order_date']) ?></td>
-                <td><?= htmlspecialchars($row['branch_name']) ?></td>
-                <td><?= htmlspecialchars($row['status']) ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
