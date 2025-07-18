@@ -14,3 +14,6 @@ try {
     // 接続失敗時のエラーメッセージ
     die('データベース接続失敗: ' . $e->getMessage());
 }
+
+// このファイルを require_once(__DIR__ . '/db_connect.php'); で利用してください
+// 変数 $pdo がDB接続済みのPDOインスタンスとして利用できます

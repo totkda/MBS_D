@@ -1,19 +1,150 @@
 <?php
-require_once __DIR__ . '/db_connect.php';
+require_once(__DIR__ . '/db_connect.php');
+
+// URLパラメータから注文IDを取得
 $order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
-$order_details = [];
-$order_info = [];
+
+// 表示用変数の初期化
+$order_date = '';
+$order_no = '';
+$customer_name = '';
+$order_note = '';
+$details = [];
+$update_message = '';
+
+// データ取得
 if ($order_id > 0) {
-    // 注文明細
-    $sql = 'SELECT od.*, p.short_name, p.product_name FROM order_details od LEFT JOIN products p ON od.product_id = p.product_id WHERE od.order_id = ?';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$order_id]);
-    $order_details = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    // 注文基本情報（orders + customers）
-    $sql2 = 'SELECT o.order_date, o.order_id, c.customer_name FROM orders o LEFT JOIN customers c ON o.customer_id = c.customer_id WHERE o.order_id = ?';
-    $stmt2 = $pdo->prepare($sql2);
-    $stmt2->execute([$order_id]);
-    $order_info = $stmt2->fetch(PDO::FETCH_ASSOC);
+    try {
+        // 注文基本情報
+        $sql = "SELECT o.order_id, o.order_date, o.note, c.customer_name
+                FROM orders o
+                LEFT JOIN customers c ON o.customer_id = c.customer_id
+                WHERE o.order_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$order_id]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($order) {
+            $order_date = $order['order_date'] ?? '';
+            $order_no = $order['order_id'] ?? '';
+            $customer_name = $order['customer_name'] ?? '';
+            $order_note = $order['note'] ?? '';
+        }
+
+        // 注文明細情報
+        $detail_sql = "SELECT od.product_id, od.quantity, od.unit_price, od.note, p.product_name
+                       FROM order_details od
+                       LEFT JOIN products p ON od.product_id = p.product_id
+                       WHERE od.order_id = ?";
+        $detail_stmt = $pdo->prepare($detail_sql);
+        $detail_stmt->execute([$order_id]);
+        $details = $detail_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        error_log('データ取得エラー: ' . $e->getMessage());
+        $order_date = '';
+        $order_no = '';
+        $customer_name = '';
+        $order_note = '';
+        $details = [];
+        echo '<pre style="color:red;">データ取得エラー: ' . $e->getMessage() . '</pre>';
+    }
+} else {
+    echo '<pre style="color:red;">order_idが指定されていません。URL例: 注文詳細.php?order_id=1</pre>';
+    echo '<pre style="color:blue;">$_GET: '; print_r($_GET); echo '</pre>';
+}
+
+// 更新処理
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
+    try {
+        $pdo->beginTransaction();
+
+        $order_id = intval($_POST['order_id']);
+        $order_date = $_POST['order_date'] ?? '';
+        $customer_name = $_POST['customer_name'] ?? '';
+        $order_note = $_POST['order_note'] ?? '';
+
+        // 顧客ID取得
+        $customer_id = null;
+        if ($customer_name !== '') {
+            $stmt = $pdo->prepare("SELECT customer_id FROM customers WHERE customer_name = ?");
+            $stmt->execute([$customer_name]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $customer_id = $row['customer_id'];
+            } else {
+                throw new Exception('顧客名が見つかりません');
+            }
+        }
+
+        $stmt = $pdo->prepare("UPDATE orders SET order_date = ?, customer_id = ?, note = ? WHERE order_id = ?");
+        $stmt->execute([$order_date, $customer_id, $order_note, $order_id]);
+
+        // 注文明細の更新（全削除→再登録）
+        $pdo->prepare("DELETE FROM order_details WHERE order_id = ?")->execute([$order_id]);
+
+        $product_names = $_POST['product_name'] ?? [];
+        $quantities = $_POST['quantity'] ?? [];
+        $unit_prices = $_POST['unit_price'] ?? [];
+        $abstracts = $_POST['abstract'] ?? [];
+
+        for ($i = 0; $i < count($product_names); $i++) {
+            $product_name = trim($product_names[$i]);
+            if ($product_name === '') continue;
+
+            // 商品ID取得
+            $stmt = $pdo->prepare("SELECT product_id FROM products WHERE product_name = ? OR short_name = ?");
+            $stmt->execute([$product_name, $product_name]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $product_id = $row['product_id'];
+            } else {
+                $stmt = $pdo->query("SELECT MAX(product_id) AS max_id FROM products");
+                $max_id = $stmt->fetchColumn();
+                $product_id = $max_id ? $max_id + 1 : 1;
+                $stmt = $pdo->prepare("INSERT INTO products (product_id, short_name, product_name) VALUES (?, ?, ?)");
+                $stmt->execute([$product_id, '', $product_name]);
+            }
+
+            $quantity = is_numeric($quantities[$i]) ? intval($quantities[$i]) : 0;
+            $unit_price = is_numeric($unit_prices[$i]) ? floatval($unit_prices[$i]) : 0;
+            $note = $abstracts[$i] ?? '';
+
+            $stmt = $pdo->prepare("INSERT INTO order_details (order_id, product_id, quantity, unit_price, note) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$order_id, $product_id, $quantity, $unit_price, $note]);
+        }
+
+        $pdo->commit();
+        $update_message = '<div class="alert alert-success">編集内容を保存しました。</div>';
+
+        // 最新データ再取得
+        $sql = "SELECT o.order_id, o.order_date, o.note, c.customer_name
+                FROM orders o
+                LEFT JOIN customers c ON o.customer_id = c.customer_id
+                WHERE o.order_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$order_id]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($order) {
+            $order_date = $order['order_date'] ?? '';
+            $order_no = $order['order_id'] ?? '';
+            $customer_name = $order['customer_name'] ?? '';
+            $order_note = $order['note'] ?? '';
+        }
+
+        $detail_sql = "SELECT od.product_id, od.quantity, od.unit_price, od.note, p.product_name
+                       FROM order_details od
+                       LEFT JOIN products p ON od.product_id = p.product_id
+                       WHERE od.order_id = ?";
+        $detail_stmt = $pdo->prepare($detail_sql);
+        $detail_stmt->execute([$order_id]);
+        $details = $detail_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $update_message = '<div class="alert alert-danger">更新エラー: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -88,6 +219,86 @@ if ($order_id > 0) {
     </header>
 
     <main class="container mt-5">
+        <?php echo $update_message; ?>
+        <form method="post" id="order-edit-form">
+            <input type="hidden" name="order_id" value="<?php echo htmlspecialchars($order_no); ?>">
+            <div>
+                <div class="d-flex justify-content-between">
+                    <span>注文書</span>
+                    <input type="date" name="order_date" value="<?php echo htmlspecialchars($order_date); ?>">
+                    <span>
+                        <label for="customer-order-no">No.</label>
+                        <input type="text" id="customer-order-no" size="4" readonly value="<?php echo htmlspecialchars($order_no); ?>">
+                    </span>
+                </div>
+                <div>
+                    <input type="text" id="customer-name" name="customer_name" value="<?php echo htmlspecialchars($customer_name); ?>">
+                    <label for="customer-name">様</label>
+                </div>
+                <div>
+                    下記のとおり御注文申し上げます
+                </div>
+            </div>
+            <div style="height: 300px; overflow-y: auto;">
+                <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
+                    <colgroup>
+                        <col style="width: 2%;">
+                        <col style="width: 30%;">
+                        <col style="width: 8%;">
+                        <col style="width: 8%;">
+                        <col style="width: 24%;">
+                        <col style="width: 24%;">
+                    </colgroup>
+                    <thead class="table-dark table-bordered border-light sticky-top">
+                        <tr>
+                            <th colspan="2">品名</th>
+                            <th>数量</th>
+                            <th>単価</th>
+                            <th>摘要</th>
+                            <th>備考</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php for ($i = 0; $i < 15; $i++): ?>
+                        <tr>
+                            <td><?php echo $i + 1; ?></td>
+                            <td><input type="text" name="product_name[]" value="<?php echo htmlspecialchars($details[$i]['product_name'] ?? ''); ?>"></td>
+                            <td><input type="text" name="quantity[]" value="<?php echo htmlspecialchars($details[$i]['quantity'] ?? ''); ?>"></td>
+                            <td>&yen;<input type="text" name="unit_price[]" style="width: 90%;" value="<?php echo htmlspecialchars($details[$i]['unit_price'] ?? ''); ?>"></td>
+                            <td><input type="text" name="abstract[]" value="<?php echo htmlspecialchars($details[$i]['note'] ?? ''); ?>"></td>
+                            <?php if ($i === 0): ?>
+                                <td rowspan="15"><textarea rows="5" name="order_note"><?php echo htmlspecialchars($order_note); ?></textarea></td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center">
+                <input type="button" id="order-cansel-button" class="btn btn-danger" value="戻る">
+                <input type="button" id="order-insert-button" class="btn btn-success" value="編集完了">
+            </div>
+            <!-- 編集確認モーダル -->
+            <div class="modal fade" id="order-insert" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">注文書の編集完了をします</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div>本当に編集完了しますか？</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                            <button type="submit" name="update" class="btn btn-success" id="modal-update-btn">編集完了する</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- ...existing code... -->
+    </main>
         <div>
             <div class="text-end">
                 <button type="button" class="btn btn-primary">pdfダウンロード</button>
@@ -223,22 +434,28 @@ if ($order_id > 0) {
     <!-- JS読み込み（jQuery → Bootstrap） -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- ポップアップ表示のスクリプト -->
     <script>
-        $(function() {
-            $('#order-insert-button').on('click', function() {
+        $(function () {
+            $('#order-insert-button').on('click', function () {
                 const modal = new bootstrap.Modal(document.getElementById('order-insert'));
                 modal.show();
             });
-
-            $('#order-cansel-button').on('click', function() {
+            $('#modal-update-btn').on('click', function () {
+                $('#order-edit-form').submit();
+            });
+            $('#order-cansel-button').on('click', function () {
                 const modal = new bootstrap.Modal(document.getElementById('order-cansel'));
                 modal.show();
             });
-            $('#order-delete-button').on('click', function() {
+            $('#order-delete-button').on('click', function () {
                 const modal = new bootstrap.Modal(document.getElementById('order-delete'));
                 modal.show();
+            });
+            // フォームの通常送信を禁止
+            $('#order-edit-form').on('submit', function(e) {
+                if (!$('#modal-update-btn').is(':focus')) {
+                    e.preventDefault();
+                }
             });
         });
     </script>
