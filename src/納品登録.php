@@ -1,3 +1,6 @@
+<?php
+// 納品登録画面（HTML→PHP化）
+?>
 <!DOCTYPE html>
 <html>
 
@@ -7,9 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <style>
-        /* ナビゲーションバー */
-
+    <style>
         nav ul {
             list-style-type: none;
         }
@@ -21,7 +22,7 @@
         .container {
             padding: 20px 0;
         }
-            
+
         .main-nav ul {
             display: flex;
             justify-content: center;
@@ -30,8 +31,7 @@
             padding: 0;
             gap: 15px;
         }
-            
-            /* ナビゲーションボタンの基本スタイル */
+
         .main-nav a {
             display: inline-block;
             padding: 10px 24px;
@@ -45,14 +45,18 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-            
-        /* ▼▼▼ この部分でカーソルが重なった時の色を指定 ▼▼▼ */
+
         .main-nav a:hover {
-            background-color: #007bff; /* 背景色を青に */
-            color: #ffffff;           /* 文字色を白に */
+            background-color: #007bff;
+            color: #ffffff;
             border-color: #0069d9;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        td input,
+        textarea {
+            width: 100%;
         }
     </style>
 </head>
@@ -345,75 +349,47 @@
         </div>
     </main>
 
-    
-    <div class="modal fade" id="delivery-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+    <!-- モーダル・JSのみ残す -->
+    <div class="modal fade" id="delivery-insert" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">納品書を登録します</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">納品書を登録します</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に登録しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に登録しますか？</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                     <div class="text-end">
                         <a href="./納品管理.html"><button type="button" class="btn btn-success"
-                                onclick="hideForm()">登録する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                                onclick="hideForm()">登録する</button></a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="delivery-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+    <div class="modal fade" id="delivery-cansel" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">納品書の作成を中断しますか？</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">納品書の作成を中断しますか？</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に中断して戻りますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に中断して戻りますか？</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                     <div class="text-end">
                         <a href="./納品管理.html"><button type="button" class="btn btn-danger"
-                                onclick="hideForm()">戻る</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                                onclick="hideForm()">戻る</button></a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script src="./js/delivery_register.js"></script>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        $(function () {
-            $('#openModal').on('click', function () {
-                const modal = new bootstrap.Modal(document.getElementById('delivery-register-form'));
-                modal.show();
-            });
-        });
-    </script>
-    <script>
-        $(function () {
-            $('#delivery-cansel-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
-                const modal = new bootstrap.Modal(document.getElementById('delivery-cansel'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
-                modal.show();
-            });
-        });
-
-        $(function () {
-            $('#delivery-insert-button').on('click', function () {  // #delivery-insert-buttonを変更する ①ポップアップを出すボタンにid属性を追加し、ボタンの名前をつける ②#ボタンの名前 に変更する
-                const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));  // delivery-insertを変更する 上で付けたポップアップの名前に変更する
-                modal.show();
-            });
-        });
-    </script>
-
     <script src="./js/delivery_register.js"></script>
 </body>
 
