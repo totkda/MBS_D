@@ -1,7 +1,10 @@
 <?php
 // index.php
 // 統計情報検索ページ
+
 // DB接続設定
+require_once 'db_connect.php';
+
 ?>
 <!DOCTYPE html>
 <html>
