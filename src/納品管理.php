@@ -197,7 +197,7 @@ try {
                                             <td><?= htmlspecialchars($delivery['delivery_date']) ?></td>
                                             <td><?= htmlspecialchars($delivery['delivery_status_name']) ?></td>
                                             <td><a href="./納品詳細.php?delivery_id=<?= $delivery['delivery_no'] ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                            <td><input type="button" class="btn btn-danger" value="削除"></td>
+                                            <td><a href="php/delete_delivery.php?id=<?= htmlspecialchars($delivery['delivery_no']) ?>" onclick="return confirm('本当に削除しますか？');"><input type="button" class="btn btn-danger" value="削除"></a></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
