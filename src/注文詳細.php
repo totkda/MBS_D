@@ -1,27 +1,21 @@
 <?php
-// db_connect.phpを利用
 require_once(__DIR__ . '/db_connect.php');
 
 // URLパラメータから注文IDを取得
-$order_id = 0;
-if (isset($_GET['order_id'])) {
-    $order_id = intval($_GET['order_id']);
-} elseif (isset($_REQUEST['order_id'])) {
-    $order_id = intval($_REQUEST['order_id']);
-}
-
-$order = null;
-$details = [];
+$order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
 
 // 表示用変数の初期化
 $order_date = '';
 $order_no = '';
 $customer_name = '';
 $order_note = '';
+$details = [];
+$update_message = '';
 
+// データ取得
 if ($order_id > 0) {
     try {
-        // 注文基本情報を取得
+        // 注文基本情報
         $sql = "SELECT o.order_id, o.order_date, o.note, c.customer_name
                 FROM orders o
                 LEFT JOIN customers c ON o.customer_id = c.customer_id
@@ -37,7 +31,7 @@ if ($order_id > 0) {
             $order_note = $order['note'] ?? '';
         }
 
-        // 注文明細情報を取得
+        // 注文明細情報
         $detail_sql = "SELECT od.product_id, od.quantity, od.unit_price, od.note, p.product_name
                        FROM order_details od
                        LEFT JOIN products p ON od.product_id = p.product_id
@@ -45,32 +39,26 @@ if ($order_id > 0) {
         $detail_stmt = $pdo->prepare($detail_sql);
         $detail_stmt->execute([$order_id]);
         $details = $detail_stmt->fetchAll(PDO::FETCH_ASSOC);
-        // 並び替え（ORDER BY）は不要なら削除
 
     } catch (PDOException $e) {
         error_log('データ取得エラー: ' . $e->getMessage());
-        $order = null;
-        $details = [];
         $order_date = '';
         $order_no = '';
         $customer_name = '';
         $order_note = '';
+        $details = [];
         echo '<pre style="color:red;">データ取得エラー: ' . $e->getMessage() . '</pre>';
     }
 } else {
-    // GETパラメータ名が正しいか確認
     echo '<pre style="color:red;">order_idが指定されていません。URL例: 注文詳細.php?order_id=1</pre>';
     echo '<pre style="color:blue;">$_GET: '; print_r($_GET); echo '</pre>';
-    echo '<pre style="color:blue;">$_REQUEST: '; print_r($_REQUEST); echo '</pre>';
 }
 
 // 更新処理
-$update_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     try {
         $pdo->beginTransaction();
 
-        // 注文基本情報の更新
         $order_id = intval($_POST['order_id']);
         $order_date = $_POST['order_date'] ?? '';
         $customer_name = $_POST['customer_name'] ?? '';
@@ -111,7 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             if ($row) {
                 $product_id = $row['product_id'];
             } else {
-                // 商品がなければ新規登録
                 $stmt = $pdo->query("SELECT MAX(product_id) AS max_id FROM products");
                 $max_id = $stmt->fetchColumn();
                 $product_id = $max_id ? $max_id + 1 : 1;
@@ -130,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         $pdo->commit();
         $update_message = '<div class="alert alert-success">編集内容を保存しました。</div>';
 
-        // ここで最新データを再取得してフォームに反映
+        // 最新データ再取得
         $sql = "SELECT o.order_id, o.order_date, o.note, c.customer_name
                 FROM orders o
                 LEFT JOIN customers c ON o.customer_id = c.customer_id
@@ -153,7 +140,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         $detail_stmt = $pdo->prepare($detail_sql);
         $detail_stmt->execute([$order_id]);
         $details = $detail_stmt->fetchAll(PDO::FETCH_ASSOC);
-        // 並び替え（ORDER BY）は不要なら削除
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
@@ -182,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         .container {
             padding: 20px 0;
         }
-            
+
         .main-nav ul {
             display: flex;
             justify-content: center;
@@ -191,8 +177,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             padding: 0;
             gap: 15px;
         }
-            
-            /* ナビゲーションボタンの基本スタイル */
+
+        /* ナビゲーションボタンの基本スタイル */
         .main-nav a {
             display: inline-block;
             padding: 10px 24px;
@@ -206,11 +192,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-            
+
         /* ▼▼▼ この部分でカーソルが重なった時の色を指定 ▼▼▼ */
         .main-nav a:hover {
-            background-color: #007bff; /* 背景色を青に */
-            color: #ffffff;           /* 文字色を白に */
+            background-color: #007bff;
+            /* 背景色を青に */
+            color: #ffffff;
+            /* 文字色を白に */
             border-color: #0069d9;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -311,6 +299,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         </form>
         <!-- ...existing code... -->
     </main>
+        <div>
+            <div class="text-end">
+                <button type="button" class="btn btn-primary">pdfダウンロード</button>
+                <button type="button" id="order-delete-button" class="btn btn-danger">削除</button>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>注文書</span>
+                <input type="date" value="<?= htmlspecialchars($order_info['order_date'] ?? '') ?>">
+                <span>
+                    <label for="customer-order-no">No.</label>
+                    <input type="text" id="customer-order-no" size="4" readonly value="<?= htmlspecialchars($order_info['order_id'] ?? '') ?>">
+                </span>
+            </div>
+            <div>
+                <input type="text" id="customer-name" value="<?= htmlspecialchars($order_info['customer_name'] ?? '') ?>">
+                <label for="customer-name">様</label>
+            </div>
+            <div>
+                下記のとおり御注文申し上げます
+            </div>
+        </div>
+        <!--  表  -->
+        <div style="height: 300px; overflow-y: auto;">
+            <table class="table table-bordered  border-dark  table-striped table-hover table-sm align-middle">
+                <colgroup>
+                    <col style="width: 2%;">
+                    <col style="width: 30%;">
+                    <col style="width: 8%;">
+                    <col style="width: 8%;">
+                    <col style="width: 24%;">
+                    <col style="width: 24%;">
+                </colgroup>
+                <thead class="table-dark table-bordered  border-light sticky-top">
+                    <tr>
+                        <th colspan="2">品名</th>
+                        <th>数量</th>
+                        <th>単価</th>
+                        <th>摘要</th>
+                        <th>備考</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($order_id > 0 && $order_details): ?>
+                        <?php foreach ($order_details as $i => $detail): ?>
+                            <tr>
+                                <td><?= $i + 1 ?></td>
+                                <td>
+                                    <input type="text" value="<?php if (!empty($detail['short_name']) && !empty($detail['product_name'])): ?><?= htmlspecialchars($detail['short_name']) ?>（<?= htmlspecialchars($detail['product_name']) ?>）<?php else: ?><?= htmlspecialchars($detail['product_id'] ?? '') ?><?php endif; ?>">
+                                </td>
+                                <td><input type="text" value="<?= htmlspecialchars($detail['quantity'] ?? '') ?>"></td>
+                                <td>&yen;<input type="text" style="width: 90%;" value="<?= htmlspecialchars($detail['unit_price'] ?? '') ?>"></td>
+                                <td><input type="text" value="<?= htmlspecialchars($detail['note'] ?? '') ?>"></td>
+                                <td rowspan="1"><textarea rows="2"><?= htmlspecialchars($detail['remarks'] ?? '') ?></textarea></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6">注文明細がありません</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center">
+            <input type="button" id="order-cansel-button" class="btn btn-danger" value="戻る">
+            <input type="button" id="order-insert-button" class="btn btn-success" value="編集完了">
+        </div>
+    </main>
+
+    <div class="modal fade" id="order-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">注文書の編集完了をします</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に編集完了しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./注文管理.html"><button type="button" class="btn btn-success"
+                                onclick="hideForm()">編集完了する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="order-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
         <div class="modal-dialog modal-xl">
@@ -355,36 +432,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     </div>
 
     <!-- JS読み込み（jQuery → Bootstrap） -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- ポップアップ表示のスクリプト -->
-<script>
-    $(function () {
-        // 編集完了ボタンでのみフォーム送信
-        $('#order-insert-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-insert'));
-            modal.show();
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(function () {
+            $('#order-insert-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('order-insert'));
+                modal.show();
+            });
+            $('#modal-update-btn').on('click', function () {
+                $('#order-edit-form').submit();
+            });
+            $('#order-cansel-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('order-cansel'));
+                modal.show();
+            });
+            $('#order-delete-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('order-delete'));
+                modal.show();
+            });
+            // フォームの通常送信を禁止
+            $('#order-edit-form').on('submit', function(e) {
+                if (!$('#modal-update-btn').is(':focus')) {
+                    e.preventDefault();
+                }
+            });
         });
-        $('#modal-update-btn').on('click', function () {
-            $('#order-edit-form').submit();
-        });
-        $('#order-cansel-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-cansel'));
-            modal.show();
-        });
-        $('#order-delete-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('order-delete'));
-            modal.show();
-        });
-        // フォームの通常送信を禁止
-        $('#order-edit-form').on('submit', function(e) {
-            if (!$('#modal-update-btn').is(':focus')) {
-                e.preventDefault();
-            }
-        });
-    });
-</script>
+    </script>
 </body>
 
 </html>

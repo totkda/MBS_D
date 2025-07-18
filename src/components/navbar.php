@@ -5,10 +5,10 @@
 ?>
 <nav class="main-nav">
     <ul>
-        <li><a href="/src/php/index.php">ホーム</a></li>
-        <li><a href="/src/php/order_management.php">注文管理</a></li>
-        <li><a href="/src/php/delivery_management.php">納品管理</a></li>
-        <li><a href="/src/php/customer_register.php">顧客登録</a></li>
+        <li><a href="/src/index.php">ホーム</a></li>
+        <li><a href="/src/order/order_management.php">注文管理</a></li>
+        <li><a href="/src/delivery/delivery_management.php">納品管理</a></li>
+        <li><a href="/src/customer/customer_register.php">顧客登録</a></li>
     </ul>
 </nav>
 <style>

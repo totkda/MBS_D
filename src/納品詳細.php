@@ -5,6 +5,7 @@ require_once(__DIR__ . '/db_connect.php');
 $delivery_id = isset($_GET['delivery_id']) ? intval($_GET['delivery_id']) : 0;
 
 // 削除処理
+$delete_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $delivery_id > 0) {
     try {
         $pdo->beginTransaction();
@@ -14,12 +15,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
         $stmt->execute([$delivery_id]);
         $pdo->commit();
         // 削除後は管理画面にリダイレクト
-        header("Location: 納品管理.html");
+        header("Location: 納品管理.php");
         exit;
     } catch (Exception $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         $delete_message = '<div class="alert alert-danger">削除エラー: ' . htmlspecialchars($e->getMessage()) . '</div>';
     }
+}
+
+// クエリパラメータからdelivery_idを取得（重複除去）
+$deliveryId = $delivery_id;
+if (!$deliveryId) {
+    die('納品IDが指定されていません。');
+}
+
+try {
+    // 納品書情報を取得
+    $sql = "
+        SELECT 
+            d.delivery_id,
+            d.delivery_date,
+            c.customer_name,
+            c.address,
+            c.phone_number,
+            d.delivery_status_name
+        FROM deliveries d
+        LEFT JOIN customers c ON d.customer_id = c.customer_id
+        WHERE d.delivery_id = ?
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$deliveryId]);
+    $delivery = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$delivery) {
+        die('指定された納品IDのデータが見つかりません。');
+    }
+
+    // 納品書詳細情報を取得
+    $sqlDetails = "
+        SELECT 
+            dd.product_id,
+            p.product_name,
+            dd.quantity,
+            od.unit_price AS price,
+            (dd.quantity * od.unit_price) AS total_price
+        FROM delivery_details dd
+        LEFT JOIN products p ON dd.product_id = p.product_id
+        LEFT JOIN order_details od ON dd.product_id = od.product_id AND od.order_id = (
+            SELECT odm.order_id FROM order_delivery_map odm WHERE odm.delivery_id = ?
+        )
+        WHERE dd.delivery_id = ?
+    ";
+    $stmtDetails = $pdo->prepare($sqlDetails);
+    $stmtDetails->execute([$deliveryId, $deliveryId]);
+    $deliveryDetails = $stmtDetails->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die('データベースエラー: ' . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -29,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
     <meta charset="UTF-8">
     <title>MBSアプリ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-   <style>
+    <style>
         /* ナビゲーションバー */
 
         nav ul {
@@ -53,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
             gap: 15px;
         }
             
-            /* ナビゲーションボタンの基本スタイル */
+        /* ナビゲーションボタンの基本スタイル */
         .main-nav a {
             display: inline-block;
             padding: 10px 24px;
@@ -83,16 +134,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
     <header class="container text-center">
         <nav class="main-nav">
             <ul>
-                <li><a href="./index.html">ホーム</a></li>
-                <li><a href="./注文管理.html">注文管理</a></li>
-                <li><a href="./納品管理.html">納品管理</a></li>
-                <li><a href="./顧客取込.html">顧客登録</a></li>
+                <li><a href="./index.php">ホーム</a></li>
+                <li><a href="./注文管理.php">注文管理</a></li>
+                <li><a href="./納品管理.php">納品管理</a></li>
+                <li><a href="./顧客取込.php">顧客登録</a></li>
             </ul>
         </nav>
     </header>
 
     <main class="container mt-5">
-        <?php echo $delete_message ?? ''; ?>
+        <?php echo $delete_message; ?>
         <div>
             <div class="text-end">
                 <input type="button" class="btn btn-primary" value="pdfダウンロード">
@@ -103,14 +154,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
             <div>
                 <div class="d-flex justify-content-between">
                     <span>納品書</span>
-                    <input type="date">
+                    <input type="date" value="<?= htmlspecialchars($delivery['delivery_date']) ?>" readonly>
                     <span>
                         <label for="customer-delivery-no">No.</label>
-                        <input type="text" id="customer-delivery-no" size="4" readonly>
+                        <input type="text" id="customer-delivery-no" size="4" value="<?= htmlspecialchars($delivery['delivery_id']) ?>" readonly>
                     </span>
                 </div>
                 <div>
-                    <input type="text" id="customer-name">
+                    <input type="text" id="customer-name" value="<?= htmlspecialchars($delivery['customer_name']) ?>" readonly>
                     <label for="customer-name">様</label>
                 </div>
                 <div>
@@ -120,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
 
             <!-- 下部 -->
             <div>
-                <table class="table table-bordered  border-dark  table-striped table-hover table-sm align-middle mb-0"">
+                <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle mb-0">
                     <colgroup>
                         <col style="width: 2%;">
                         <col style="width: 42%;">
@@ -128,85 +179,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
                         <col style="width: 11%;">
                         <col style="width: 33%;">
                     </colgroup>
-                    <thead class="table-dark table-bordered  border-light sticky-top">
+                    <thead class="table-dark table-bordered border-light sticky-top">
                         <tr>
                             <th colspan="2">品名</th>
                             <th>数量</th>
                             <th>単価</th>
-                            <th>
-                                <span>金額(</span>
-                                <input type="radio" name="price" id="price-excluded">
-                                <label for="price-excluded">税抜</label>
-                                <input type="radio" name="price" id="price-included">
-                                <label for="price-included">税込)</label>
-                            </th>
+                            <th>金額</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php foreach ($deliveryDetails as $index => $detail): ?>
                         <tr>
-                            <td>1</td>
-                            <td>日経コンピュータ 11月号</td>
-                            <td>1</td>
-                            <td>&yen;1300</td>
-                            <td>&yen;1300</td>
+                            <td><?= $index + 1 ?></td>
+                            <td><?= htmlspecialchars($detail['product_name']) ?></td>
+                            <td><?= htmlspecialchars($detail['quantity']) ?></td>
+                            <td>&yen;<?= number_format($detail['price']) ?></td>
+                            <td>&yen;<?= number_format($detail['total_price']) ?></td>
                         </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>日経ネットワーク 11月号</td>
-                            <td>1</td>
-                            <td>&yen;1300</td>
-                            <td>&yen;1300</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
+                        <?php endforeach; ?>
                     </tbody>
                     <tfoot>
                         <tr>
                             <th colspan="2">合計</th>
-                            <td>2</td>
+                            <td><?= array_sum(array_column($deliveryDetails, 'quantity')) ?></td>
                             <td></td>
-                            <td>&yen;2600</td>
+                            <td>&yen;<?= number_format(array_sum(array_column($deliveryDetails, 'total_price'))) ?></td>
                         </tr>
                     </tfoot>
-                </table>
-                <table class="table table-bordered  border-dark  table-striped table-hover table-sm align-middle mt-0">
-                    <colgroup>
-                        <col style="width: 12%;">
-                        <col style="width: 12%;">
-                        <col style="width: 12%;">
-                        <col style="width: 19%;">
-                        <col style="width: 11%;">
-                        <col style="width: 33%;">
-                    </colgroup>
-                    <tbody>
-                        <tr>
-                            <td>税率</td>
-                            <td>%</td>
-                            <td>消費税率等</td>
-                            <td></td>
-                            <td>税込合計金額</td>
-                            <td>&yen;2600</td>
-                        </tr>
-                    </tbody>
                 </table>
             </div>
         </form>
@@ -215,58 +214,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
             <input type="button" id="delivery-insert-button" class="btn btn-success" value="編集完了">
         </div>
     </main>
-    <script src="./js/delivery_detail.js"></script>
-<div class="modal fade" id="delivery-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+
+    <!-- モーダル -->
+    <div class="modal fade" id="delivery-insert" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">納品書の編集完了をします</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">納品書の編集完了をします</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に編集完了しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に編集完了しますか？</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                     <div class="text-end">
-                        <a href="./納品管理.html"><button type="button" class="btn btn-success"
-                                onclick="hideForm()">編集完了する</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                        <a href="./納品管理.php"><button type="button" class="btn btn-success">編集完了する</button></a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="delivery-cansel" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+    <div class="modal fade" id="delivery-cansel" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">納品書の作成を中断しますか？</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">納品書の作成を中断しますか？</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に中断して戻りますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に中断して戻りますか？</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
                     <div class="text-end">
-                        <a href="./納品管理.html"><button type="button" class="btn btn-danger"
-                                onclick="hideForm()">戻る</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
+                        <a href="./納品管理.php"><button type="button" class="btn btn-danger">戻る</button></a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="delivery-delete" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
+    <div class="modal fade" id="delivery-delete" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">削除します</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <h5 class="modal-title">削除します</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div>本当に削除しますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                    <div>本当に削除しますか？</div>
                 </div>
                 <div class="modal-footer">
                     <form method="post" style="display:inline;">
@@ -277,28 +275,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $deliver
             </div>
         </div>
     </div>
-        <!-- JS読み込み（jQuery → Bootstrap） -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ポップアップ表示のスクリプト -->
-<script>
-    $(function () {
-        $('#delivery-insert-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));
-            modal.show();
-        });
+    <!-- JS読み込み（jQuery → Bootstrap） -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-        $('#delivery-cansel-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('delivery-cansel'));
-            modal.show();
+    <!-- ポップアップ表示のスクリプト -->
+    <script>
+        $(function () {
+            $('#delivery-insert-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('delivery-insert'));
+                modal.show();
+            });
+
+            $('#delivery-cansel-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('delivery-cansel'));
+                modal.show();
+            });
+
+            $('#delivery-delete-button').on('click', function () {
+                const modal = new bootstrap.Modal(document.getElementById('delivery-delete'));
+                modal.show();
+            });
         });
-        $('#delivery-delete-button').on('click', function () {
-            const modal = new bootstrap.Modal(document.getElementById('delivery-delete'));
-            modal.show();
-        });
-    });
-</script>
+    </script>
 </body>
 
 </html>
