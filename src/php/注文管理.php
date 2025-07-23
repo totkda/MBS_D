@@ -1,41 +1,64 @@
 <?php
+//検索テスト
 // DB接続設定
 $pdo = new PDO('mysql:host=localhost;dbname=mbs;charset=utf8', 'root', '');
 
-// 検索処理
+// ▼▼▼ ここに追加 ▼▼▼
+
+
+// 検索条件の初期化
 $where = [];
 $params = [];
 
+// 注文日（開始）
 if (!empty($_GET['order_date_since'])) {
-    $where[] = 'order_date >= :since';
+    $where[] = "orders.order_date >= :since";
     $params[':since'] = $_GET['order_date_since'];
 }
+
+// 注文日（終了）
 if (!empty($_GET['order_date_until'])) {
-    $where[] = 'order_date <= :until';
+    $where[] = "orders.order_date <= :until";
     $params[':until'] = $_GET['order_date_until'];
 }
+
+// 顧客名
 if (!empty($_GET['customer_name'])) {
-    $where[] = 'customer_name LIKE :customer_name';
-    $params[':customer_name'] = '%' . $_GET['customer_name'] . '%';
+    $where[] = "customers.customer_name LIKE :customer_name";
+    $params[':customer_name'] = "%" . $_GET['customer_name'] . "%";
 }
-if (!empty($_GET['branch_name'])) {
-    $where[] = 'branch_name LIKE :branch_name';
-    $params[':branch_name'] = '%' . $_GET['branch_name'] . '%';
-}
+
+// ステータス（「すべて」以外の場合のみ）
 if (!empty($_GET['status']) && $_GET['status'] !== 'すべて') {
-    $where[] = 'status = :status';
+    $where[] = "orders.status = :status";
     $params[':status'] = $_GET['status'];
 }
 
-$sql = 'SELECT * FROM orders';
-if (!empty($where)) {
-    $sql .= ' WHERE ' . implode(' AND ', $where);
+// 支店名
+if (!empty($_GET['branch_name'])) {
+    $where[] = "branches.branch_name LIKE :branch_name";
+    $params[':branch_name'] = "%" . $_GET['branch_name'] . "%";
 }
-$sql .= ' ORDER BY order_date DESC';
 
+// SQL組み立て
+$sql = "
+    SELECT orders.order_id, customers.customer_name, orders.order_date, orders.status
+    FROM orders
+    JOIN customers ON orders.customer_id = customers.customer_id
+    JOIN branches ON customers.branch_id = branches.branch_id
+";
+
+
+// WHERE句を追加
+if (!empty($where)) {
+    $sql .= " WHERE " . implode(" AND ", $where);
+}
+
+// 実行
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$orders = $stmt->fetchAll();
+$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -168,12 +191,12 @@ $orders = $stmt->fetchAll();
                         <?php if (!empty($orders)): ?>
                             <?php foreach ($orders as $order): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($order['id']) ?></td>
+                                    <td><?= htmlspecialchars($order['order_id']) ?></td>
                                     <td><?= htmlspecialchars($order['customer_name']) ?></td>
                                     <td><?= htmlspecialchars($order['order_date']) ?></td>
                                     <td><?= htmlspecialchars($order['status']) ?></td>
-                                    <td><a href="./注文詳細.php?id=<?= $order['id'] ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                    <td><button class="btn btn-danger" onclick="confirmDelete(<?= $order['id'] ?>)">削除</button></td>
+                                    <td><a href="詳細画面.php?id=<?= htmlspecialchars($order['order_id']) ?>">詳細</a></td>
+                                    <td><button class="btn btn-danger">削除</button></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>

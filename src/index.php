@@ -1,7 +1,10 @@
 <?php
 // index.php
 // 統計情報検索ページ
+
 // DB接続設定
+require_once 'db_connect.php';
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -18,7 +21,7 @@
         <?php include './components/navbar.php'; ?>
         <!-- ショートカットキーをナビバー下に配置 -->
         <div class="text-center my-2">
-            <a href="/src/php/order_register.php"><input type="button" class="btn btn-success" value="注文登録"></a>
+            <a href="/src/order/order_register.php"><input type="button" class="btn btn-success" value="注文登録"></a>
             <a href="./納品登録.php"><input type="button" class="btn btn-success" value="納品登録"></a>
         </div>
     </header>
