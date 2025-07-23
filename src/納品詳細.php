@@ -1,15 +1,35 @@
 <?php
-require_once 'db_connect.php'; // DB接続ファイルを読み込み
+require_once(__DIR__ . '/db_connect.php');
 
-// クエリパラメータからdelivery_idを取得
-$deliveryId = $_GET['delivery_id'] ?? null;
+// 納品ID取得
+$delivery_id = isset($_GET['delivery_id']) ? intval($_GET['delivery_id']) : 0;
 
+// 削除処理
+$delete_message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && $delivery_id > 0) {
+    try {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare("DELETE FROM delivery_details WHERE delivery_id = ?");
+        $stmt->execute([$delivery_id]);
+        $stmt = $pdo->prepare("DELETE FROM deliveries WHERE delivery_id = ?");
+        $stmt->execute([$delivery_id]);
+        $pdo->commit();
+        // 削除後は管理画面にリダイレクト
+        header("Location: 納品管理.php");
+        exit;
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        $delete_message = '<div class="alert alert-danger">削除エラー: ' . htmlspecialchars($e->getMessage()) . '</div>';
+    }
+}
+
+// クエリパラメータからdelivery_idを取得（重複除去）
+$deliveryId = $delivery_id;
 if (!$deliveryId) {
     die('納品IDが指定されていません。');
 }
 
 try {
-
     // 納品書情報を取得
     $sql = "
         SELECT 
@@ -41,11 +61,13 @@ try {
             (dd.quantity * od.unit_price) AS total_price
         FROM delivery_details dd
         LEFT JOIN products p ON dd.product_id = p.product_id
-        LEFT JOIN order_details od ON dd.product_id = od.product_id
+        LEFT JOIN order_details od ON dd.product_id = od.product_id AND od.order_id = (
+            SELECT odm.order_id FROM order_delivery_map odm WHERE odm.delivery_id = ?
+        )
         WHERE dd.delivery_id = ?
     ";
     $stmtDetails = $pdo->prepare($sqlDetails);
-    $stmtDetails->execute([$deliveryId]);
+    $stmtDetails->execute([$deliveryId, $deliveryId]);
     $deliveryDetails = $stmtDetails->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die('データベースエラー: ' . $e->getMessage());
@@ -121,13 +143,14 @@ try {
     </header>
 
     <main class="container mt-5">
+        <?php echo $delete_message; ?>
         <div>
             <div class="text-end">
                 <input type="button" class="btn btn-primary" value="pdfダウンロード">
                 <input type="button" id="delivery-delete-button" class="btn btn-danger" value="削除">
             </div>
         </div>
-        <form>
+        <form method="post">
             <div>
                 <div class="d-flex justify-content-between">
                     <span>納品書</span>
@@ -244,10 +267,10 @@ try {
                     <div>本当に削除しますか？</div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                    <div class="text-end">
-                        <a href="./納品管理.php"><button type="button" class="btn btn-danger">削除する</button></a>
-                    </div>
+                    <form method="post" style="display:inline;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                        <button type="submit" name="delete" class="btn btn-danger">削除する</button>
+                    </form>
                 </div>
             </div>
         </div>
