@@ -1,110 +1,15 @@
 <?php
-require_once(__DIR__ . '/db_connect.php'); // DB接続ファイルを読み込み
+require_once 'db_connect.php'; // DB接続ファイルを読み込み
 
-// GETリクエストで検索条件を受信
-$deliveryDateSince = $_GET['deliveryDateSince'] ?? ''; // 納品日期間の開始
-$deliveryDateUntil = $_GET['deliveryDateUntil'] ?? ''; // 納品日期間の終了
-$customerName      = $_GET['customerName'] ?? '';
-$status            = $_GET['status'] ?? 'すべて'; // delivery_status_nameに対応
-$branchName        = $_GET['branchName'] ?? '';
-$page              = intval($_GET['page'] ?? 1); // ページング用
-$limit             = 10; // 1ページあたりの表示件数 (任意)
-$offset            = ($page - 1) * $limit;
+// 検索条件の取得
+$deliveryDateSince = $_GET['deliveryDateSince'] ?? null;
+$deliveryDateUntil = $_GET['deliveryDateUntil'] ?? null;
+$customerName = $_GET['customerName'] ?? null;
+$status = $_GET['status'] ?? null;
+$branchName = $_GET['branchName'] ?? null;
 
-// SQLクエリの構築
-$sql_base = "FROM
-    deliveries d
-    LEFT JOIN customers c ON d.customer_id = c.customer_id
-    LEFT JOIN branches b ON c.branch_id = b.branch_id
-    LEFT JOIN delivery_details dd ON d.delivery_id = dd.delivery_id
-    LEFT JOIN order_delivery_map odm ON d.delivery_id = odm.delivery_id
-    LEFT JOIN order_details od ON odm.order_id = od.order_id AND dd.product_id = od.product_id
-    WHERE 1=1";
-
-$where = "";
-$params = [];
-
-// 納品日期間
-if (!empty($deliveryDateSince)) {
-    $where .= " AND d.delivery_date >= ?";
-    $params[] = $deliveryDateSince;
-}
-if (!empty($deliveryDateUntil)) {
-    $where .= " AND d.delivery_date <= ?";
-    $params[] = $deliveryDateUntil;
-}
-
-// 顧客名 (部分一致検索)
-if (!empty($customerName)) {
-    $where .= " AND c.customer_name LIKE ?";
-    $params[] = '%' . $customerName . '%';
-}
-
-// ステータス
-if ($status !== 'すべて') {
-    $where .= " AND d.delivery_status_name = ?";
-    $params[] = $status;
-}
-
-// 支店名
-if (!empty($branchName)) {
-    $where .= " AND b.branch_name LIKE ?";
-    $params[] = '%' . $branchName . '%';
-}
-
-// 件数取得用SQL
-$countSql = "SELECT COUNT(*) FROM deliveries d WHERE 1=1";
-$countParams = [];
-if (!empty($deliveryDateSince)) {
-    $countSql .= " AND d.delivery_date >= ?";
-    $countParams[] = $deliveryDateSince;
-}
-if (!empty($deliveryDateUntil)) {
-    $countSql .= " AND d.delivery_date <= ?";
-    $countParams[] = $deliveryDateUntil;
-}
-if (!empty($customerName)) {
-    $countSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE customer_name LIKE ?)";
-    $countParams[] = '%' . $customerName . '%';
-}
-if ($status !== 'すべて') {
-    $countSql .= " AND d.delivery_status_name = ?";
-    $countParams[] = $status;
-}
-if (!empty($branchName)) {
-    $countSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE branch_id IN (SELECT branch_id FROM branches WHERE branch_name LIKE ?))";
-    $countParams[] = '%' . $branchName . '%';
-}
-
-// データ取得用SQL
-$dataSql = "SELECT d.* FROM deliveries d WHERE 1=1";
-$dataParams = [];
-if (!empty($deliveryDateSince)) {
-    $dataSql .= " AND d.delivery_date >= ?";
-    $dataParams[] = $deliveryDateSince;
-}
-if (!empty($deliveryDateUntil)) {
-    $dataSql .= " AND d.delivery_date <= ?";
-    $dataParams[] = $deliveryDateUntil;
-}
-if (!empty($customerName)) {
-    $dataSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE customer_name LIKE ?)";
-    $dataParams[] = '%' . $customerName . '%';
-}
-if ($status !== 'すべて') {
-    $dataSql .= " AND d.delivery_status_name = ?";
-    $dataParams[] = $status;
-}
-if (!empty($branchName)) {
-    $dataSql .= " AND d.customer_id IN (SELECT customer_id FROM customers WHERE branch_id IN (SELECT branch_id FROM branches WHERE branch_name LIKE ?))";
-    $dataParams[] = '%' . $branchName . '%';
-}
-$dataSql .= " ORDER BY d.delivery_date DESC, d.delivery_id DESC LIMIT ? OFFSET ?";
-$dataParams[] = $limit;
-$dataParams[] = $offset;
-
-// 件数取得・データ取得は1回だけでOK
 try {
+
     // SQLクエリの作成
     $sql = "
         SELECT 
@@ -148,8 +53,8 @@ try {
     $stmt->execute($params);
     $deliveries = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    echo "<pre style='color:red;'>データベースエラー: " . htmlspecialchars($e->getMessage()) . "</pre>";
-    $deliveries = [];
+    echo "データベースエラー: " . $e->getMessage();
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -295,12 +200,7 @@ try {
                                         <td><?= htmlspecialchars($delivery['delivery_date']) ?></td>
                                         <td><?= htmlspecialchars($delivery['delivery_status_name']) ?></td>
                                         <td><a href="./納品詳細.php?delivery_id=<?= $delivery['delivery_no'] ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                        <td>
-                                            <form method="post" action="./納品管理.php" style="display:inline;" onsubmit="return confirm('本当に削除しますか？');">
-                                                <input type="hidden" name="delete_delivery_id" value="<?= htmlspecialchars($delivery['delivery_no']) ?>">
-                                                <input type="submit" class="btn btn-danger" value="削除">
-                                            </form>
-                                        </td>
+                                        <td><a href="php/delete_delivery.php?id=<?= htmlspecialchars($delivery['delivery_no']) ?>" onclick="return confirm('本当に削除しますか？');"><input type="button" class="btn btn-danger" value="削除"></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>

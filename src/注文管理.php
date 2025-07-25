@@ -44,6 +44,13 @@ try {
     $totalRecords = 0;
     $totalPages = 1;
 }
+// 注文一覧取得（顧客名もJOIN）
+$sql = "SELECT o.order_id, o.order_date, c.customer_name, o.note
+        FROM orders o
+        LEFT JOIN customers c ON o.customer_id = c.customer_id
+        ORDER BY o.order_id DESC";
+$stmt = $pdo->query($sql);
+$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html>
