@@ -1,3 +1,4 @@
+//注文管理検索.js,統計検索.js,納品管理検索.jsを１つにまとめたもの
 window.addEventListener('DOMContentLoaded', () => {
     // 検索ボタン（共通で一つだけある想定）
     const searchButton = document.querySelector('input.btn.btn-primary.w-100');

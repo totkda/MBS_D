@@ -241,6 +241,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             modal.show();
         }
     </script>
+    <script src="./js/検索.js?v=1"></script>
 </body>
 
 </html>

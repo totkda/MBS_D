@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 $keyword = $_GET['keyword'] ?? '';
 
-if ($keyword === '') {
+if (trim($keyword) === '') {
     echo json_encode([]);
     exit;
 }
