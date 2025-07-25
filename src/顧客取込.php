@@ -22,7 +22,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
             if (!empty($data[0])) {
                 $stmt = $pdo->prepare("REPLACE INTO customers (customer_id, customer_name, branch_id, phone_number, postal_code, address, registration_date, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
-                    $data[0], $data[1], $data[2], $data[3], $data[4], $data[5], $data[6], $data[7]
+                    $data[0],
+                    $data[1],
+                    $data[2],
+                    $data[3],
+                    $data[4],
+                    $data[5],
+                    $data[6],
+                    $data[7]
                 ]);
             }
         }
@@ -55,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
         .container {
             padding: 20px 0;
         }
-            
+
         .main-nav ul {
             display: flex;
             justify-content: center;
@@ -64,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
             padding: 0;
             gap: 15px;
         }
-            
-            /* ナビゲーションボタンの基本スタイル */
+
+        /* ナビゲーションボタンの基本スタイル */
         .main-nav a {
             display: inline-block;
             padding: 10px 24px;
@@ -79,11 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-            
+
         /* ▼▼▼ この部分でカーソルが重なった時の色を指定 ▼▼▼ */
         .main-nav a:hover {
-            background-color: #007bff; /* 背景色を青に */
-            color: #ffffff;           /* 文字色を白に */
+            background-color: #007bff;
+            /* 背景色を青に */
+            color: #ffffff;
+            /* 文字色を白に */
             border-color: #0069d9;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -115,31 +124,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['customer_file'])) {
     </main>
 
     <div class="modal fade" id="client-insert" tabindex="-1"> <!--  id属性の値をポップアップの名前をつけ、変更する  -->
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">顧客情報を取り込みます</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div>本当に顧客情報を取り込みますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-                            <div class="text-end">
-                                <a href="./顧客取込.html"><button type="button" class="btn btn-success"
-                                        onclick="hideForm()">取り込みします</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
-                            </div>
-                        </div>
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">顧客情報を取り込みます</h5> <!--  ポップアップのタイトルを変更する 太字になるところです  -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div>本当に顧客情報を取り込みますか？</div> <!--  ポップアップのメッセージを変更する 太字じゃないところです  -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./顧客取込.html"><button type="button" class="btn btn-success"
+                                onclick="hideForm()">取り込みします</button></a> <!--  href属性の値を変更する ./遷移後の画面.htmlにする  -->
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-                <!-- JS読み込み（jQuery → Bootstrap） -->
+    <!-- JS読み込み（jQuery → Bootstrap） -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/customer_import.js"></script>
-    
+
 </body>
 
 </html>
