@@ -1,12 +1,48 @@
 <?php
-require_once __DIR__ . '/db_connect.php';
-// 削除処理
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_id'])) {
-    $delete_order_id = intval($_POST['delete_order_id']);
-    // order_details, order_delivery_mapも削除
-    $pdo->prepare('DELETE FROM order_details WHERE order_id = ?')->execute([$delete_order_id]);
-    $pdo->prepare('DELETE FROM order_delivery_map WHERE order_id = ?')->execute([$delete_order_id]);
-    $pdo->prepare('DELETE FROM orders WHERE order_id = ?')->execute([$delete_order_id]);
+// 注文管理.php
+
+// db_connect.php を利用
+require_once(__DIR__ . '/db_connect.php'); // ここで$pdoが使える
+
+// ページング用
+$page  = intval($_GET['page'] ?? 1);
+$limit = 10;
+$offset = ($page - 1) * $limit;
+
+// データ取得（orders, customers, deliveries, branchesを結合して一覧表示）
+$sql = "SELECT
+    o.order_id,
+    o.order_date,
+    c.customer_name,
+    b.branch_name,
+    COALESCE(MAX(d.delivery_status_name), '未納品') AS delivery_status_name,
+    o.note AS order_note
+FROM
+    orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+LEFT JOIN branches b ON c.branch_id = b.branch_id
+LEFT JOIN order_delivery_map odm ON o.order_id = odm.order_id
+LEFT JOIN deliveries d ON odm.delivery_id = d.delivery_id
+GROUP BY o.order_id
+ORDER BY o.order_date DESC, o.order_id DESC
+LIMIT ? OFFSET ?";
+
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // ページング用の総件数取得
+    $countSql = "SELECT COUNT(*) FROM orders";
+    $totalRecords = $pdo->query($countSql)->fetchColumn();
+    $totalPages = ceil($totalRecords / $limit);
+} catch (PDOException $e) {
+    error_log("データ取得エラー: " . $e->getMessage());
+    $orders = [];
+    $totalRecords = 0;
+    $totalPages = 1;
 }
 // 注文一覧取得（顧客名もJOIN）
 $sql = "SELECT o.order_id, o.order_date, c.customer_name, o.note
@@ -79,9 +115,9 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <header class="container text-center">
         <nav class="main-nav">
             <ul>
-                <li><a href="./index.html">ホーム</a></li>
+                <li><a href="./index.php">ホーム</a></li>
                 <li><a href="./注文管理.php">注文管理</a></li>
-                <li><a href="./納品管理.html">納品管理</a></li>
+                <li><a href="./納品管理.php">納品管理</a></li>
                 <li><a href="./顧客取込.php">顧客登録</a></li>
             </ul>
         </nav>
@@ -90,8 +126,6 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">注文書検索</h5>
-
-
                 <div class="mt-4">
                     <div class="mb-3">
                         <div>注文日</div>
@@ -100,12 +134,10 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <input type="date" id="order-date-until" class="form-control" style="width: 80%; display: inline;">
                         <label for="order-date-until" class="form-label">まで</label><br>
                     </div>
-
                     <div class="mb-3">
                         <label for="customer_name" class="form-label">顧客名</label>
                         <input type="text" id="customer_name" name="customer_name" class="form-control" placeholder="顧客名を入力" value="">
                     </div>
-
                     <div class="mb-3">
                         <label for="status-select" class="form-label">ステータス</label>
                         <select id="status-select" class="form-select">
@@ -114,70 +146,146 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <option>納品済</option>
                         </select>
                     </div>
-
                     <div class="mb-3">
                         <label for="branch_name" class="form-label">支店名</label>
                         <input type="text" id="branch_name" name="branch_name" class="form-control" placeholder="支店名を入力" value="">
                     </div>
-
                     <input type="hidden" name="page" value="1">
                     <input type="button" value="検索" class="btn btn-primary w-100"></button>
                 </div>
             </div>
         </div>
-
         <div>
-
             <!--  注文表  -->
             <div>
-
                 <div class="text-end">
-                    <a href="./注文登録.html"><input type="button" class="btn btn-success" value="新規登録"></a>
+                    <a href="./注文登録.php"><input type="button" class="btn btn-success" value="新規登録"></a>
                 </div>
-
                 <!--  表  -->
                 <div style="height: 500px; overflow-y: auto;">
                     <table class="table table-bordered border-dark table-striped table-hover table-sm align-middle">
                         <caption align="top">注文書一覧</caption>
-                        <thead class="table-dark table-bordered  border-light sticky-top">
+                        <thead class="table-dark table-bordered border-light sticky-top">
                             <tr>
                                 <th>No.</th>
                                 <th>顧客名</th>
+                                <th>支店名</th>
                                 <th>注文日</th>
+                                <th>ステータス</th>
                                 <th>備考</th>
-                                <th></th>
-                                <th></th>
+                                <th>詳細</th>
+                                <th>削除</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php foreach ($orders as $order): ?>
+                        <tbody id="order-list-tbody">
+                            <?php if (!empty($orders)): ?>
+                                <?php foreach ($orders as $order): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($order['order_id']); ?></td>
+                                        <td><?php echo htmlspecialchars($order['customer_name'] ?? '未登録顧客'); ?></td>
+                                        <td><?php echo htmlspecialchars($order['branch_name'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($order['order_date']); ?></td>
+                                        <td><?php echo htmlspecialchars($order['delivery_status_name'] ?? '未納品'); ?></td>
+                                        <td><?php echo htmlspecialchars($order['order_note'] ?? ''); ?></td>
+                                        <td><a href="./注文詳細.php?order_id=<?php echo htmlspecialchars($order['order_id']); ?>"><button type="button" class="btn btn-primary btn-sm">詳細</button></a></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm delete-order-btn" data-order-id="<?php echo htmlspecialchars($order['order_id']); ?>">削除</button></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($order['order_id']) ?></td>
-                                    <td><?= htmlspecialchars($order['customer_name']) ?></td>
-                                    <td><?= htmlspecialchars($order['order_date']) ?></td>
-                                    <td><?= htmlspecialchars($order['note']) ?></td>
-                                    <td><a href="./注文詳細.php?order_id=<?= $order['order_id'] ?>"><input type="button" class="btn btn-primary" value="詳細"></a></td>
-                                    <td>
-                                        <form method="post" style="display:inline;">
-                                            <input type="hidden" name="delete_order_id" value="<?= htmlspecialchars($order['order_id']) ?>">
-                                            <input type="submit" class="btn btn-danger" value="削除" onclick="return confirm('本当に削除しますか？');">
-                                        </form>
-                                    </td>
+                                    <td colspan="8" class="text-center">該当する注文がありません。</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
-
-                <!--  ページング(jsで生成)  -->
-                <div class="text-center" id="pagination-area"></div>
+                <div class="text-center mt-3">
+                    <div id="pagination-area"></div>
+                </div>
             </div>
         </div>
     </main>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // PHPからページ情報をJSへ
+        const totalPages = <?= (int)$totalPages ?>;
+        let currentPage = <?= (int)$page ?>;
+
+        // ページ切り替え時の処理
+        function onPageChange(newPage) {
+            // 現在のクエリパラメータを維持しつつpageだけ変更
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', newPage);
+            window.location.search = params.toString();
+        }
+    </script>
     <script src="./js/pagination.js"></script>
     <script src="./js/注文管理検索.js"></script>
+    <!-- 編集用モーダル (例) -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1" aria-labelledby="editOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editOrderModalLabel">注文情報編集</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 編集フォーム (例) -->
+                    <form id="edit-order-form">
+                        <div class="mb-3">
+                            <label for="edit-customer-name" class="form-label">顧客名</label>
+                            <input type="text" class="form-control" id="edit-customer-name" name="customer_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-order-date" class="form-label">注文日</label>
+                            <input type="date" class="form-control" id="edit-order-date" name="order_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-delivery-status" class="form-label">納品ステータス</label>
+                            <select class="form-select" id="edit-delivery-status" name="delivery_status">
+                                <option value="未納品">未納品</option>
+                                <option value="納品済">納品済</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-order-note" class="form-label">備考</label>
+                            <textarea class="form-control" id="edit-order-note" name="order_note"></textarea>
+                        </div>
+                        <input type="hidden" id="edit-order-id" name="order_id">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <div class="text-end">
+                        <a href="./注文管理.php">
+                            <button type="button" class="btn btn-success" onclick="hideForm()">編集完了する</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // 編集モーダル表示
+        function showEditModal(order) {
+            document.getElementById('edit-order-id').value = order.order_id;
+            document.getElementById('edit-customer-name').value = order.customer_name;
+            document.getElementById('edit-order-date').value = order.order_date;
+            document.getElementById('edit-delivery-status').value = order.delivery_status_name === '納品済' ? '納品済' : '未納品';
+            document.getElementById('edit-order-note').value = order.order_note;
+            const myModal = new bootstrap.Modal(document.getElementById('editOrderModal'));
+            myModal.show();
+        }
+        // 編集完了時の処理
+        function hideForm() {
+            const myModalEl = document.getElementById('editOrderModal');
+            const modal = bootstrap.Modal.getInstance(myModalEl);
+            if (modal) {
+                modal.hide();
+            };
+        }
+    </script>
 </body>
 
 </html>
