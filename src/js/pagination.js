@@ -1,11 +1,12 @@
 // ページネーション（ページ送り）機能を実装するJavaScriptです。
 
 document.addEventListener('DOMContentLoaded', function () {
-    const totalPages = 20;    // 総ページ数（好きな数字でOK）
-    let currentPage = 7;      // 現在のページ（テスト用で7にしてます）
+    // totalPages, currentPageはPHPからグローバルで渡される
+    if (typeof totalPages === 'undefined' || typeof currentPage === 'undefined') return;
 
     function renderPagination() {
         const area = document.getElementById('pagination-area');
+        if (!area) return;
         area.innerHTML = '';
 
         // ←ボタン
@@ -17,14 +18,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (currentPage > 1) {
                 currentPage--;
                 renderPagination();
-                // ページ切り替え時の処理をここに
+                if (typeof onPageChange === 'function') onPageChange(currentPage);
             }
         });
         area.appendChild(prevBtn);
 
         // ページ番号生成ロジック
         let pages = [];
-
         if (totalPages <= 10) {
             // ページ数が10以下なら全ページ番号を表示
             for (let i = 1; i <= totalPages; i++) {
@@ -66,9 +66,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     pageBtn.classList.add('active');
                 }
                 pageBtn.addEventListener('click', function () {
-                    currentPage = p;
-                    renderPagination();
-                    // ページ切り替え時の処理をここに
+                    if (currentPage !== p) {
+                        currentPage = p;
+                        renderPagination();
+                        if (typeof onPageChange === 'function') onPageChange(currentPage);
+                    }
                 });
                 area.appendChild(pageBtn);
             }
@@ -83,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (currentPage < totalPages) {
                 currentPage++;
                 renderPagination();
-                // ページ切り替え時の処理をここに
+                if (typeof onPageChange === 'function') onPageChange(currentPage);
             }
         });
         area.appendChild(nextBtn);
