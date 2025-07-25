@@ -90,15 +90,22 @@ require_once 'db_connect.php';
                         <?php endif; ?>
                     </tbody>
                 </table>
-                <!-- ページング（省略） -->
-                <div class="text-center" id="pagination-area">
-                    <input type="button" value="←">
-                    <span></span>
-                    <input type="button" value="→">
-                </div>
+                <div class="text-center" id="pagination-area"></div>
             </div>
         </div>
     </main>
+    <script>
+        // PHPからページ情報をJSへ
+        const totalPages = <?= isset($totalPages) ? (int)$totalPages : 1 ?>;
+        let currentPage = <?= isset($page) ? (int)$page : 1 ?>;
+
+        // ページ切り替え時の処理
+        function onPageChange(newPage) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', newPage);
+            window.location.search = params.toString();
+        }
+    </script>
     <script src="./js/pagination.js"></script>
 </body>
 
