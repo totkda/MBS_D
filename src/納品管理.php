@@ -224,7 +224,6 @@ try {
     </header>
 
     <main class="container mt-5 d-flex">
-
         <!--  検索フォーム  -->
         <div class="card">
             <div class="card-body">
@@ -312,9 +311,28 @@ try {
                         </tbody>
                     </table>
                 </div>
+
+                <div class="text-center mt-3">
+                    <div id="pagination-area"></div>
+                </div>
             </div>
         </div>
     </main>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // PHPからページ情報をJSへ
+        const totalPages = <?= isset($totalPages) ? (int)$totalPages : 1 ?>;
+        let currentPage = <?= isset($page) ? (int)$page : 1 ?>;
+
+        // ページ切り替え時の処理
+        function onPageChange(newPage) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', newPage);
+            window.location.search = params.toString();
+        }
+    </script>
+    <script src="./js/pagination.js"></script>
 </body>
 
 </html>

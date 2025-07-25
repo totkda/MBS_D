@@ -108,9 +108,9 @@ try {
     <header class="container text-center">
         <nav class="main-nav">
             <ul>
-                <li><a href="./index.html">ホーム</a></li>
+                <li><a href="./index.php">ホーム</a></li>
                 <li><a href="./注文管理.php">注文管理</a></li>
-                <li><a href="./納品管理.html">納品管理</a></li>
+                <li><a href="./納品管理.php">納品管理</a></li>
                 <li><a href="./顧客取込.php">顧客登録</a></li>
             </ul>
         </nav>
@@ -152,7 +152,7 @@ try {
             <!--  注文表  -->
             <div>
                 <div class="text-end">
-                    <a href="./注文登録.html"><input type="button" class="btn btn-success" value="新規登録"></a>
+                    <a href="./注文登録.php"><input type="button" class="btn btn-success" value="新規登録"></a>
                 </div>
                 <!--  表  -->
                 <div style="height: 500px; overflow-y: auto;">
@@ -192,30 +192,27 @@ try {
                         </tbody>
                     </table>
                 </div>
-                <div class="text-center mt-3" id="pagination-area">
-                    <?php if ($totalPages > 1): ?>
-                        <nav>
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item <?php if ($page <= 1) echo 'disabled'; ?>">
-                                    <a class="page-link" href="#" data-page="<?php echo $page - 1; ?>">前へ</a>
-                                </li>
-                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                    <li class="page-item <?php if ($i === $page) echo 'active'; ?>">
-                                        <a class="page-link" href="#" data-page="<?php echo $i; ?>"><?php echo $i; ?></a>
-                                    </li>
-                                <?php endfor; ?>
-                                <li class="page-item <?php if ($page >= $totalPages) echo 'disabled'; ?>">
-                                    <a class="page-link" href="#" data-page="<?php echo $page + 1; ?>">次へ</a>
-                                </li>
-                            </ul>
-                        </nav>
-                    <?php endif; ?>
+                <div class="text-center mt-3">
+                    <div id="pagination-area"></div>
                 </div>
             </div>
         </div>
     </main>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // PHPからページ情報をJSへ
+        const totalPages = <?= (int)$totalPages ?>;
+        let currentPage = <?= (int)$page ?>;
+
+        // ページ切り替え時の処理
+        function onPageChange(newPage) {
+            // 現在のクエリパラメータを維持しつつpageだけ変更
+            const params = new URLSearchParams(window.location.search);
+            params.set('page', newPage);
+            window.location.search = params.toString();
+        }
+    </script>
     <script src="./js/pagination.js"></script>
     <script src="./js/注文管理検索.js"></script>
     <!-- 編集用モーダル (例) -->
