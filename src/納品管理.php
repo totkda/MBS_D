@@ -194,6 +194,7 @@ try {
                         <tbody>
                             <?php if (!empty($deliveries)): ?>
                                 <?php foreach ($deliveries as $delivery): ?>
+                                    <pre><?= var_dump($delivery) ?></pre>
                                     <tr>
                                         <td><?= htmlspecialchars($delivery['delivery_no']) ?></td>
                                         <td><?= htmlspecialchars($delivery['customer_name']) ?></td>
